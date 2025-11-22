@@ -7,6 +7,7 @@ target/
 *.jar
 mvnw
 mvnw.cmd
+repo-backup.git
 
 ### STS ###
 .apt_generated
