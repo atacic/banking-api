@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="create-user-account-transaction-tables" author="aleksa">
+
+        <createTable tableName="user">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="email" type="varchar(128)">
+                <constraints unique="true" nullable="false" />
+            </column>
+            <column name="password" type="varchar(255)">
+                <constraints unique="false" nullable="false"/>
+            </column>
+            <column name="full_name" type="varchar(128)">
+                <constraints unique="false" nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_user_email"
+                     tableName="user"
+                     unique="true">
+            <column name="email" type="varchar(255)"/>
+        </createIndex>
+
+        <createTable tableName="account">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_account_user"
+                             referencedTableName="user" referencedColumnNames="id"/>
+            </column>
+            <column name="account_number" type="varchar(30)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="currency" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="balance" type="numeric(19,4)" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="status(20)" type="varchar" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="transaction">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_transaction_account"
+                             referencedTableName="account" referencedColumnNames="id"/>
+            </column>
+            <column name="type" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="NUMERIC(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="balance_after" type="NUMERIC(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+
+<!--    <changeSet id="SN-3" author="aleksa">-->
+<!--        <createTable tableName="role">-->
+<!--            <column name="id" type="bigint" autoIncrement="true">-->
+<!--                <constraints primaryKey="true" nullable="false" />-->
+<!--            </column>-->
+<!--            <column name="role_name" type="varchar(255)">-->
+<!--                <constraints unique="true" nullable="false"/>-->
+<!--            </column>-->
+<!--        </createTable>-->
+
+<!--        <createTable tableName="customer_role">-->
+<!--            <column name="customer_id" type="bigint">-->
+<!--                <constraints nullable="false" foreignKeyName="fk_customer_id" references="customer(id)" />-->
+<!--            </column>-->
+<!--            <column name="role_id" type="bigint">-->
+<!--                <constraints nullable="false" foreignKeyName="fk_role_id" references="role(id)" />-->
+<!--            </column>-->
+<!--        </createTable>-->
+<!--    </changeSet>-->
+
+</databaseChangeLog>
