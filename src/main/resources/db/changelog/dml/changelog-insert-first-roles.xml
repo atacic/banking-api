@@ -5,8 +5,13 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <include file="/db/changelog/ddl/changelog-create-tables-22-11-25-14-00.xml"/>
-    <include file="/db/changelog/ddl/changelog-create-role-table-23-11-25-20-34.xml"/>
-    <include file="/db/changelog/dml/changelog-insert-first-roles.xml"/>
+    <changeSet id="insert-first-roles" author="aleksa">
+        <insert tableName="role">
+            <column name="role_name" value="ROLE_USER"/>
+        </insert>
+        <insert tableName="role">
+            <column name="role_name" value="ROLE_ADMIN"/>
+        </insert>
+    </changeSet>
 
 </databaseChangeLog>
