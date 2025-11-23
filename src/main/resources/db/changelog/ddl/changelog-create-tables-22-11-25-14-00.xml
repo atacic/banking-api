@@ -92,25 +92,4 @@
 
     </changeSet>
 
-
-<!--    <changeSet id="SN-3" author="aleksa">-->
-<!--        <createTable tableName="role">-->
-<!--            <column name="id" type="bigint" autoIncrement="true">-->
-<!--                <constraints primaryKey="true" nullable="false" />-->
-<!--            </column>-->
-<!--            <column name="role_name" type="varchar(255)">-->
-<!--                <constraints unique="true" nullable="false"/>-->
-<!--            </column>-->
-<!--        </createTable>-->
-
-<!--        <createTable tableName="customer_role">-->
-<!--            <column name="customer_id" type="bigint">-->
-<!--                <constraints nullable="false" foreignKeyName="fk_customer_id" references="customer(id)" />-->
-<!--            </column>-->
-<!--            <column name="role_id" type="bigint">-->
-<!--                <constraints nullable="false" foreignKeyName="fk_role_id" references="role(id)" />-->
-<!--            </column>-->
-<!--        </createTable>-->
-<!--    </changeSet>-->
-
 </databaseChangeLog>
