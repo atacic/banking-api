@@ -1,7 +1,7 @@
 package com.aleksa.banking_api.security;
 
 import com.aleksa.banking_api.service.UserSecurityService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +22,7 @@ import static com.aleksa.banking_api.security.SecurityConstants.SIGN_UP_URLS;
 
 @Configuration
 @EnableMethodSecurity
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final UserSecurityService userSecurityService;
