@@ -8,5 +8,6 @@
     <include file="/db/changelog/ddl/changelog-create-tables-22-11-25-14-00.xml"/>
     <include file="/db/changelog/ddl/changelog-create-role-table-23-11-25-20-34.xml"/>
     <include file="/db/changelog/dml/changelog-insert-first-roles.xml"/>
+    <include file="/db/changelog/ddl/rename-user-table-01-12-2025-12-23.xml"/>
 
 </databaseChangeLog>
