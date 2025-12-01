@@ -1,7 +1,7 @@
 package com.aleksa.banking_api.security;
 
 import com.google.gson.Gson;
-import com.aleksa.banking_api.exception.UnauthorizedResponse;
+import com.aleksa.banking_api.exception.response.UnauthorizedResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

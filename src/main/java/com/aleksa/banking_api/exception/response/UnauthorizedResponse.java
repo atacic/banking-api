@@ -1,4 +1,4 @@
-package com.aleksa.banking_api.exception;
+package com.aleksa.banking_api.exception.response;
 
 import lombok.Getter;
 import lombok.Setter;
