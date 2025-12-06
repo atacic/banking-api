@@ -1,4 +1,4 @@
-package com.aleksa.banking_api.service;
+package com.aleksa.banking_api.service.impl;
 
 import com.aleksa.banking_api.dto.request.LoginRequest;
 import com.aleksa.banking_api.dto.request.RegisterRequest;
@@ -9,16 +9,18 @@ import com.aleksa.banking_api.mapper.UserMapper;
 import com.aleksa.banking_api.model.Role;
 import com.aleksa.banking_api.model.RoleName;
 import com.aleksa.banking_api.model.User;
-import com.aleksa.banking_api.model.UserStatus;
+import com.aleksa.banking_api.model.enums.UserStatus;
 import com.aleksa.banking_api.repoistory.RoleRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.security.JwtTokenProvider;
+import com.aleksa.banking_api.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 
@@ -36,6 +38,7 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
+    @Transactional
     public RegisterResponse registerUser(RegisterRequest request) {
 
         Role role = roleRepository.findByRoleName(request.roleName())

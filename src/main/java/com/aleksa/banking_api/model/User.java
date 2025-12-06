@@ -1,5 +1,6 @@
 package com.aleksa.banking_api.model;
 
+import com.aleksa.banking_api.model.enums.UserStatus;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

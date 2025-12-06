@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Calendar;
@@ -73,7 +74,7 @@ public class JwtTokenProvider {
     }
 
     private Key getSigningKey() {
-        return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
     }
 
     private Date generateExpirationDate() {

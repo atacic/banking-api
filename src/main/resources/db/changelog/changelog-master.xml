@@ -9,5 +9,15 @@
     <include file="/db/changelog/ddl/changelog-create-role-table-23-11-25-20-34.xml"/>
     <include file="/db/changelog/dml/changelog-insert-first-roles.xml"/>
     <include file="/db/changelog/ddl/rename-user-table-01-12-2025-12-23.xml"/>
+    <include file="/db/changelog/ddl/changelog-add-transaction-status-column-06-12-25.xml"/>
 
 </databaseChangeLog>
+
+<!-- TODO
+<changeSet id="20251206-01-set-account-id-auto-increment" author="mvasic">
+        <addAutoIncrement
+            tableName="account"
+            columnName="id"
+            columnDataType="BIGINT"/>
+    </changeSet>
+-->
