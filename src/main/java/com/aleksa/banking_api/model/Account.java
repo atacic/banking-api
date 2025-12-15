@@ -19,10 +19,10 @@ public class Account implements Serializable {
     @Column(name = "account_number", nullable = false, unique = true, length = 30)
     private String accountNumber;
 
-    @Column(nullable = false, length = 10)
+    @Column(name="currency", nullable = false, length = 10)
     private String currency;
 
-    @Column(nullable = false, precision = 19, scale = 4)
+    @Column(name="balance", nullable = false, precision = 19, scale = 4)
     private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)

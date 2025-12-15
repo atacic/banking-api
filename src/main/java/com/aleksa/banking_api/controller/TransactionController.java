@@ -1,9 +1,15 @@
 package com.aleksa.banking_api.controller;
 
+import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
+import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
+import com.aleksa.banking_api.dto.response.TransactionResponse;
 import com.aleksa.banking_api.service.TransactionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -11,4 +17,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class TransactionController {
 
     private final TransactionService transactionService;
+
+    @PostMapping
+    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody TransactionCreateRequest request) {
+        TransactionResponse response = transactionService.createTransaction(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{transactionId}")
+    public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable Long transactionId) {
+
+//        return ResponseEntity.ok(transactionService.getTransactionById(transactionId)); // TODO: DOMACI
+        return null; // TODO: Remove when completed
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TransactionResponse>> getTransactions(@RequestParam(required = false) Long accountId) {
+
+//        return ResponseEntity.ok(transactionService.getTransactions(accountId)); TODO: DOMACI
+        return null; // TODO: Remove when completed
+    }
+
+    @PatchMapping("/{transactionId}")
+    public ResponseEntity<TransactionResponse> patchTransaction(@PathVariable Long transactionId, @RequestBody TransactionPatchRequest request) {
+        return ResponseEntity.ok(transactionService.patchTransaction(transactionId, request));
+    }
 }

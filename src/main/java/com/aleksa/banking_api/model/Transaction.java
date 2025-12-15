@@ -23,13 +23,13 @@ public class Transaction {
     @Column(name = "status", nullable = false, length = 30)
     private TransactionStatus status;
 
-    @Column(nullable = false, precision = 19, scale = 4)
+    @Column(name="amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 
-    @Column(name = "balance_after", nullable = false, precision = 19, scale = 4)
+    @Column(name = "balance_after", nullable = true, precision = 19, scale = 4)
     private BigDecimal balanceAfter;
 
-    @Column(length = 500)
+    @Column(name="description", length = 500)
     private String description;
 
     @Column(name = "created_at", nullable = false)

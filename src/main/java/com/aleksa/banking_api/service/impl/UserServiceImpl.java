@@ -4,7 +4,7 @@ import com.aleksa.banking_api.dto.request.LoginRequest;
 import com.aleksa.banking_api.dto.request.RegisterRequest;
 import com.aleksa.banking_api.dto.response.LoginResponse;
 import com.aleksa.banking_api.dto.response.RegisterResponse;
-import com.aleksa.banking_api.exception.RoleNotFoundException;
+import com.aleksa.banking_api.exception.NotFoundException;
 import com.aleksa.banking_api.mapper.UserMapper;
 import com.aleksa.banking_api.model.Role;
 import com.aleksa.banking_api.model.RoleName;
@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
 
         Role role = roleRepository.findByRoleName(request.roleName())
                 .orElse(roleRepository.findByRoleName(RoleName.ROLE_USER)
-                        .orElseThrow(() -> new RoleNotFoundException(ROLE_NOT_FOUND)));
+                        .orElseThrow(() -> new NotFoundException(ROLE_NOT_FOUND)));
 
         User user = mapper.registerRequestToUser(request);
         user.setRoles(Collections.singleton(role));

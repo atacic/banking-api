@@ -3,7 +3,6 @@ package com.aleksa.banking_api.security;
 public class SecurityConstants {
 
     public static final String SIGN_UP_URLS = "api/v1/user/**";
-    public static final String SECRET = "MySuperSecretKeyForHS512ThatIsAtLeast64BytesLong!1234567890";
     public static final String TOKEN_PREFIX = "Bearer ";
     public static final String HEADER_STRING = "Authorization";
 
