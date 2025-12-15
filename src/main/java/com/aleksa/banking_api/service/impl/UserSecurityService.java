@@ -1,4 +1,4 @@
-package com.aleksa.banking_api.service;
+package com.aleksa.banking_api.service.impl;
 
 import com.aleksa.banking_api.model.User;
 import com.aleksa.banking_api.repoistory.UserRepository;

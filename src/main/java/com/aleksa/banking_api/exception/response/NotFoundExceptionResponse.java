@@ -1,12 +1,10 @@
 package com.aleksa.banking_api.exception.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
-public class UnauthorizedResponse {
+public class NotFoundExceptionResponse {
     String message;
 }

@@ -1,6 +1,6 @@
 package com.aleksa.banking_api.security;
 
-import com.aleksa.banking_api.service.UserSecurityService;
+import com.aleksa.banking_api.service.impl.UserSecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

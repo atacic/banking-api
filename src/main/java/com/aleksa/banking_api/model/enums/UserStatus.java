@@ -1,4 +1,4 @@
-package com.aleksa.banking_api.model;
+package com.aleksa.banking_api.model.enums;
 
 public enum UserStatus {
     ACTIVE, BLOCKED

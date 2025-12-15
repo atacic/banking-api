@@ -4,9 +4,11 @@ import com.aleksa.banking_api.model.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Calendar;
@@ -15,11 +17,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.aleksa.banking_api.security.SecurityConstants.EXPIRATION_TIME_IN_MINUTES;
-import static com.aleksa.banking_api.security.SecurityConstants.SECRET;
 
 @Slf4j
 @Component
 public class JwtTokenProvider {
+
+    @Value("${application.secret}")
+    private String applicationSecret;
 
     public String generateToken(Authentication authentication) {
         User customer = (User) authentication.getPrincipal();
@@ -73,7 +77,7 @@ public class JwtTokenProvider {
     }
 
     private Key getSigningKey() {
-        return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        return Keys.hmacShaKeyFor(applicationSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     private Date generateExpirationDate() {

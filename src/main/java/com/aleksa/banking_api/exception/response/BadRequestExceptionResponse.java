@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class RoleNotFoundExceptionResponse {
+public class BadRequestExceptionResponse {
     String message;
 }

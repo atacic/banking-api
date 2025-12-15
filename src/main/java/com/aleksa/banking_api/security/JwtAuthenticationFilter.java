@@ -1,7 +1,7 @@
 package com.aleksa.banking_api.security;
 
 import com.aleksa.banking_api.model.User;
-import com.aleksa.banking_api.service.UserSecurityService;
+import com.aleksa.banking_api.service.impl.UserSecurityService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
