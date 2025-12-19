@@ -27,9 +27,9 @@ public class AccountController {
     @GetMapping("/{accountId}")
     public ResponseEntity<AccountResponse> getAccountById(@PathVariable Long accountId) {
 
-//        AccountResponse response = accountService.getAccountById(accountId); // TODO: DOMACI
-//        return ResponseEntity.ok(response);
-        return null; // TODO: Remove when finish implementation
+       AccountResponse response = accountService.getAccountById(accountId); // TODO: DOMACI
+        return ResponseEntity.ok(response);
+
     }
 
     @GetMapping
