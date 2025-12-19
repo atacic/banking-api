@@ -7,4 +7,6 @@ import com.aleksa.banking_api.dto.response.AccountResponse;
 public interface AccountService {
     AccountResponse createAccount(AccountCreateRequest request);
     AccountResponse patchAccount(Long accountId, AccountPatchRequest request);
+
+    AccountResponse getAccountById(Long id);
 }

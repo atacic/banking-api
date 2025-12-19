@@ -73,4 +73,15 @@ public class AccountServiceImpl implements AccountService {
         account = accountRepository.save(account);
         return mapper.accountToAccountResponse(account);
     }
+
+    @Override
+    @Transactional
+    public AccountResponse getAccountById(Long id) {
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Account sa id=" + id + " ne postoji"));
+
+        // MapStruct automatski kreira AccountResponse
+        return mapper.accountToAccountResponse(account);
+    }
+
 }
