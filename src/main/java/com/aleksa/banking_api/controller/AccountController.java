@@ -35,9 +35,9 @@ public class AccountController {
     @GetMapping
     public ResponseEntity<List<AccountResponse>> getAllAccounts() {
 
-//        List<AccountResponse> responses = accountService.getAllAccounts(); // TODO: DOMACI
-//        return ResponseEntity.ok(responses);
-        return null; // TODO: Remove when finish implementation
+        List<AccountResponse> responses = accountService.getAllAccounts(); // TODO: DOMACI
+        return ResponseEntity.ok(responses);
+
     }
 
     @PatchMapping("/{accountId}")
