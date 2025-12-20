@@ -27,15 +27,14 @@ public class TransactionController {
     @GetMapping("/{transactionId}")
     public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable Long transactionId) {
 
-//        return ResponseEntity.ok(transactionService.getTransactionById(transactionId)); // TODO: DOMACI
-        return null; // TODO: Remove when completed
+       return ResponseEntity.ok(transactionService.getTransactionById(transactionId)); // TODO: DOMACI
+       // return null; // TODO: Remove when completed
     }
 
     @GetMapping
     public ResponseEntity<List<TransactionResponse>> getTransactions(@RequestParam(required = false) Long accountId) {
 
-//        return ResponseEntity.ok(transactionService.getTransactions(accountId)); TODO: DOMACI
-        return null; // TODO: Remove when completed
+       return ResponseEntity.ok(transactionService.getTransactionsByAccountId(accountId));
     }
 
     @PatchMapping("/{transactionId}")

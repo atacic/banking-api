@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,25 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final TransactionMapper mapper;
+
+    @Transactional
+    public TransactionResponse getTransactionById(Long transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new NotFoundException("Transaction with id=" + transactionId + " does not exist"));
+
+        return mapper.transactionToTransactionResponse(transaction);
+    }
+
+    @Transactional
+    public List<TransactionResponse> getTransactionsByAccountId(Long accountId) {
+        List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
+
+        if (transactions.isEmpty()) {
+            throw new NotFoundException("No transactions found for account id=" + accountId);
+        }
+
+        return mapper.transactionsToTransactionResponses(transactions);
+    }
 
     @Transactional
     public TransactionResponse createTransaction(TransactionCreateRequest request) {
