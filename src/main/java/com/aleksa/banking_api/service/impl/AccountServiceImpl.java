@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
@@ -78,10 +80,17 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public AccountResponse getAccountById(Long id) {
         Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Account sa id=" + id + " ne postoji"));
+                .orElseThrow(() -> new NotFoundException("Account with id=" + id + " not found"));
 
         // MapStruct automatski kreira AccountResponse
         return mapper.accountToAccountResponse(account);
+    }
+
+    @Override
+    @Transactional
+    public List<AccountResponse> getAllAccounts() {
+        List<Account> accounts = accountRepository.findAll();
+        return mapper.accountsToAccountResponses(accounts);
     }
 
 }
