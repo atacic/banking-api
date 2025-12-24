@@ -9,9 +9,7 @@ import java.util.List;
 public interface AccountService {
     AccountResponse createAccount(AccountCreateRequest request);
     AccountResponse patchAccount(Long accountId, AccountPatchRequest request);
-
-    AccountResponse getAccountById(Long id);
-
+    AccountResponse getAccountById(Long accountId);
     List<AccountResponse> getAllAccounts();
-
+    void deleteAccount(Long accountId);
 }
