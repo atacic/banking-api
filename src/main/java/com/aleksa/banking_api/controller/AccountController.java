@@ -26,18 +26,14 @@ public class AccountController {
 
     @GetMapping("/{accountId}")
     public ResponseEntity<AccountResponse> getAccountById(@PathVariable Long accountId) {
-
-       AccountResponse response = accountService.getAccountById(accountId); // TODO: DOMACI
+       AccountResponse response = accountService.getAccountById(accountId);
         return ResponseEntity.ok(response);
-
     }
 
     @GetMapping
     public ResponseEntity<List<AccountResponse>> getAllAccounts() {
-
-        List<AccountResponse> responses = accountService.getAllAccounts(); // TODO: DOMACI
+        List<AccountResponse> responses = accountService.getAllAccounts();
         return ResponseEntity.ok(responses);
-
     }
 
     @PatchMapping("/{accountId}")
@@ -48,7 +44,7 @@ public class AccountController {
 
     @DeleteMapping("/{accountId}")
     public ResponseEntity<Void> deleteAccount(@PathVariable Long accountId) {
-//        accountService.deleteAccount(accountId); TODO: DOMACI
+        accountService.deleteAccount(accountId);
         return ResponseEntity.noContent().build();
     }
 }

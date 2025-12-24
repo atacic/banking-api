@@ -78,9 +78,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountResponse getAccountById(Long id) {
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Account with id=" + id + " not found"));
+    public AccountResponse getAccountById(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
 
         // MapStruct automatski kreira AccountResponse
         return mapper.accountToAccountResponse(account);
@@ -93,4 +93,11 @@ public class AccountServiceImpl implements AccountService {
         return mapper.accountsToAccountResponses(accounts);
     }
 
+    @Override
+    public void deleteAccount(Long accountId) {
+        accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
+
+        accountRepository.deleteById(accountId);
+    }
 }
