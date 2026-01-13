@@ -2,7 +2,9 @@ package com.aleksa.banking_api.service;
 
 import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
 import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
+import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransactionResponse;
+import com.aleksa.banking_api.dto.response.TransferResponse;
 
 import java.util.List;
 
@@ -11,4 +13,5 @@ public interface TransactionService {
     TransactionResponse patchTransaction(Long transactionId, TransactionPatchRequest request);
     TransactionResponse getTransactionById(Long transactionId);
     List<TransactionResponse> getTransactionsByAccountId(Long accountId);
+    TransferResponse createTransfer(TransferCreateRequest request);
 }
