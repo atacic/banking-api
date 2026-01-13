@@ -2,7 +2,9 @@ package com.aleksa.banking_api.controller;
 
 import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
 import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
+import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransactionResponse;
+import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,12 @@ public class TransactionController {
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@RequestBody TransactionCreateRequest request) {
         TransactionResponse response = transactionService.createTransaction(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/transfer")
+    public ResponseEntity<TransferResponse> createTransfer(@RequestBody TransferCreateRequest request) {
+        TransferResponse response = transactionService.createTransfer(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 

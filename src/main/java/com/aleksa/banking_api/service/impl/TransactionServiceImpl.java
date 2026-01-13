@@ -2,13 +2,16 @@ package com.aleksa.banking_api.service.impl;
 
 import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
 import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
+import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransactionResponse;
+import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.exception.BadRequestException;
 import com.aleksa.banking_api.exception.NotFoundException;
 import com.aleksa.banking_api.mapper.TransactionMapper;
 import com.aleksa.banking_api.model.Account;
 import com.aleksa.banking_api.model.Transaction;
 import com.aleksa.banking_api.model.enums.TransactionStatus;
+import com.aleksa.banking_api.model.enums.TransactionType;
 import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.service.TransactionService;
@@ -107,45 +110,58 @@ public class TransactionServiceImpl implements TransactionService {
         return mapper.transactionToTransactionResponse(transaction);
     }
 
-//    @Transactional // TODO...
-//    public void createTransfer(Long fromAccountId, Long toAccountId, BigDecimal amount, String description) {
-//        // Lock both accounts
-//        Account fromAccount = accountRepository.findByIdForUpdate(fromAccountId)
-//                .orElseThrow(() -> new NotFoundException("Source account not found"));
-//
-//        Account toAccount = accountRepository.findByIdForUpdate(toAccountId)
-//                .orElseThrow(() -> new NotFoundException("Target account not found"));
-//
-//        if (fromAccount.getBalance().compareTo(amount) < 0) {
-//            throw new IllegalStateException("Insufficient funds in source account");
-//        }
-//
-//        // Source transaction
-//        Transaction txOut = new Transaction();
-//        txOut.setAccount(fromAccount);
-//        txOut.setType(TransactionType.TRANSFER_OUT);
-//        txOut.setAmount(amount);
-//        txOut.setStatus(TransactionStatus.PENDING);
-//        txOut.setDescription(description);
-//        txOut.setBalanceAfter(fromAccount.getBalance().subtract(amount));
-//        transactionRepository.save(txOut);
-//
-//        // Target transaction
-//        Transaction txIn = new Transaction();
-//        txIn.setAccount(toAccount);
-//        txIn.setType(TransactionType.TRANSFER_IN);
-//        txIn.setAmount(amount);
-//        txIn.setStatus(TransactionStatus.PENDING);
-//        txIn.setDescription(description);
-//        txIn.setBalanceAfter(toAccount.getBalance().add(amount));
-//        transactionRepository.save(txIn);
-//
-//        // Update balances
-//        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
-//        toAccount.setBalance(toAccount.getBalance().add(amount));
-//
-//        // FINALIZE transactions
-//        txOut.setStatus(TransactionStatus.COMPLETED);
-//        txIn.setStatus(TransactionStatus.COMPLETED);
-//    }
+    @Override
+    @Transactional
+    public TransferResponse createTransfer(TransferCreateRequest request) {
+        Account fromAccount = accountRepository.findByAccountNumber(request.fromAccountNumber())
+                .orElseThrow(() -> new NotFoundException("Source account not found"));
+
+        Account toAccount = accountRepository.findByAccountNumber(request.toAccountNumber())
+                .orElseThrow(() -> new NotFoundException("Target account not found"));
+
+        if (fromAccount.getBalance().compareTo(request.amount()) < 0) {
+            throw new BadRequestException("Insufficient funds in source account");
+        }
+
+        // Source transaction
+        Transaction transactionOut = new Transaction();
+        transactionOut.setAccount(fromAccount);
+        transactionOut.setType(TransactionType.TRANSFER_OUT);
+        transactionOut.setAmount(request.amount());
+        transactionOut.setStatus(TransactionStatus.PENDING);
+        transactionOut.setDescription(request.description());
+        transactionOut.setBalanceAfter(fromAccount.getBalance().subtract(request.amount()));
+        transactionRepository.save(transactionOut);
+
+        // Target transaction
+        Transaction transactionIn = new Transaction();
+        transactionIn.setAccount(toAccount);
+        transactionIn.setType(TransactionType.TRANSFER_IN);
+        transactionIn.setAmount(request.amount());
+        transactionIn.setStatus(TransactionStatus.PENDING);
+        transactionIn.setDescription(request.description());
+        transactionIn.setBalanceAfter(toAccount.getBalance().add(request.amount()));
+        transactionRepository.save(transactionIn);
+
+        // Update accounts balances
+        fromAccount.setBalance(fromAccount.getBalance().subtract(request.amount()));
+        toAccount.setBalance(toAccount.getBalance().add(request.amount()));
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
+
+        // FINALIZE transactions
+        transactionOut.setStatus(TransactionStatus.COMPLETED);
+        transactionIn.setStatus(TransactionStatus.COMPLETED);
+        transactionRepository.save(transactionOut);
+        transactionRepository.save(transactionIn);
+
+        return new TransferResponse(
+                transactionOut.getId(),
+                transactionIn.getId(),
+                request.amount(),
+                fromAccount.getBalance(),
+                toAccount.getBalance(),
+                TransactionStatus.COMPLETED
+        );
+    }
 }
