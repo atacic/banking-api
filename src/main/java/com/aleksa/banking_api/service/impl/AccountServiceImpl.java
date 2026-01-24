@@ -4,6 +4,7 @@ import com.aleksa.banking_api.dto.request.AccountCreateRequest;
 import com.aleksa.banking_api.dto.request.AccountPatchRequest;
 import com.aleksa.banking_api.dto.response.AccountResponse;
 import com.aleksa.banking_api.exception.AccountExistException;
+import com.aleksa.banking_api.exception.ForbiddenException;
 import com.aleksa.banking_api.exception.NotFoundException;
 import com.aleksa.banking_api.mapper.AccountMapper;
 import com.aleksa.banking_api.model.Account;
@@ -78,9 +79,14 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountResponse getAccountById(Long accountId) {
+    public AccountResponse getAccountById(Long accountId, User authUser) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
+
+        // Ownership check
+        if (!account.getUser().getUsername().equals(authUser.getUsername())) {
+            throw new ForbiddenException("Access denied");
+        }
 
         // MapStruct automatski kreira AccountResponse
         return mapper.accountToAccountResponse(account);
@@ -97,7 +103,6 @@ public class AccountServiceImpl implements AccountService {
     public void deleteAccount(Long accountId) {
         accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
-
         accountRepository.deleteById(accountId);
     }
 }

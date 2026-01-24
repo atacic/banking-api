@@ -6,6 +6,7 @@ import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransactionResponse;
 import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +22,13 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody TransactionCreateRequest request) {
+    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody @Valid TransactionCreateRequest request) {
         TransactionResponse response = transactionService.createTransaction(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<TransferResponse> createTransfer(@RequestBody TransferCreateRequest request) {
+    public ResponseEntity<TransferResponse> createTransfer(@RequestBody @Valid TransferCreateRequest request) {
         TransferResponse response = transactionService.createTransfer(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -43,7 +44,7 @@ public class TransactionController {
     }
 
     @PatchMapping("/{transactionId}")
-    public ResponseEntity<TransactionResponse> patchTransaction(@PathVariable Long transactionId, @RequestBody TransactionPatchRequest request) {
+    public ResponseEntity<TransactionResponse> patchTransaction(@PathVariable Long transactionId, @RequestBody @Valid TransactionPatchRequest request) {
         return ResponseEntity.ok(transactionService.patchTransaction(transactionId, request));
     }
 }

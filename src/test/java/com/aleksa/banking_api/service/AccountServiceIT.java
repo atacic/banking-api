@@ -5,6 +5,7 @@ import com.aleksa.banking_api.dto.request.AccountCreateRequest;
 import com.aleksa.banking_api.dto.request.AccountPatchRequest;
 import com.aleksa.banking_api.dto.response.AccountResponse;
 import com.aleksa.banking_api.exception.AccountExistException;
+import com.aleksa.banking_api.exception.ForbiddenException;
 import com.aleksa.banking_api.exception.NotFoundException;
 import com.aleksa.banking_api.model.Account;
 import com.aleksa.banking_api.model.User;
@@ -181,7 +182,7 @@ class AccountServiceIT extends IntegrationTestBase {
         account = accountRepository.save(account);
 
         // When
-        AccountResponse response = accountService.getAccountById(account.getId());
+        AccountResponse response = accountService.getAccountById(account.getId(), user);
 
         // Then
         assertThat(response.accountNumber()).isEqualTo("ACC-777");
@@ -195,8 +196,36 @@ class AccountServiceIT extends IntegrationTestBase {
         Long accountId = 12345L;
 
         // When, Then
-        assertThatThrownBy(() -> accountService.getAccountById(accountId))
+        assertThatThrownBy(() -> accountService.getAccountById(accountId, user))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void shouldFailGetWhenAccountUserNotEqualToAuthUser() {
+
+        // Given
+        Account account = new Account();
+        account.setAccountNumber("ACC-777");
+        account.setCurrency("EUR");
+        account.setBalance(BigDecimal.valueOf(1000));
+        account.setStatus(AccountStatus.ACTIVE);
+        account.setUser(user);
+        account = accountRepository.save(account);
+        Long accountId = account.getId();
+
+        User differentUser = new User(
+                LocalDateTime.now(),
+                null,
+                "user@email.com",
+                "pass",
+                "User",
+                LocalDateTime.now(),
+                UserStatus.ACTIVE
+        );
+
+        // When, Then
+        assertThatThrownBy(() -> accountService.getAccountById(accountId, differentUser))
+                .isInstanceOf(ForbiddenException.class);
     }
 
     @Test

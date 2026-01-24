@@ -3,10 +3,13 @@ package com.aleksa.banking_api.controller;
 import com.aleksa.banking_api.dto.request.AccountCreateRequest;
 import com.aleksa.banking_api.dto.request.AccountPatchRequest;
 import com.aleksa.banking_api.dto.response.AccountResponse;
+import com.aleksa.banking_api.model.User;
 import com.aleksa.banking_api.service.AccountService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,14 +22,15 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping
-    public ResponseEntity<AccountResponse> createAccount(@RequestBody AccountCreateRequest request) {
+    public ResponseEntity<AccountResponse> createAccount(@RequestBody @Valid AccountCreateRequest request) {
         AccountResponse response = accountService.createAccount(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/{accountId}")
-    public ResponseEntity<AccountResponse> getAccountById(@PathVariable Long accountId) {
-       AccountResponse response = accountService.getAccountById(accountId);
+    public ResponseEntity<AccountResponse> getAccountById(@PathVariable @Valid Long accountId,
+                                                          @AuthenticationPrincipal User authUser) {
+       AccountResponse response = accountService.getAccountById(accountId, authUser);
         return ResponseEntity.ok(response);
     }
 
@@ -37,7 +41,7 @@ public class AccountController {
     }
 
     @PatchMapping("/{accountId}")
-    public ResponseEntity<AccountResponse> patchAccount(@PathVariable Long accountId, @RequestBody AccountPatchRequest request) {
+    public ResponseEntity<AccountResponse> patchAccount(@PathVariable Long accountId, @RequestBody @Valid AccountPatchRequest request) {
         AccountResponse response = accountService.patchAccount(accountId, request);
         return ResponseEntity.ok(response);
     }
