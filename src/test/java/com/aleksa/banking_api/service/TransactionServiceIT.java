@@ -26,9 +26,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 class TransactionServiceIT extends IntegrationTestBase {
 
@@ -141,10 +142,10 @@ class TransactionServiceIT extends IntegrationTestBase {
     void shouldCreateDepositTransactionSuccessfully() {
 
         // Given
-        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), TransactionType.DEPOSIT, BigDecimal.valueOf(200), "Deposit");
+        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), BigDecimal.valueOf(200), "Deposit");
 
         // When
-        TransactionResponse response = transactionService.createTransaction(request);
+        TransactionResponse response = transactionService.deposit(request);
 
         // Then
         assertThat(response.amount()).isEqualTo(BigDecimal.valueOf(200));
@@ -158,10 +159,10 @@ class TransactionServiceIT extends IntegrationTestBase {
     void shouldCreateWithdrawalTransactionSuccessfully() {
 
         // Given
-        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), TransactionType.WITHDRAWAL, BigDecimal.valueOf(300), "ATM");
+        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), BigDecimal.valueOf(300), "ATM");
 
         // When
-        TransactionResponse response = transactionService.createTransaction(request);
+        TransactionResponse response = transactionService.withdrawal(request);
 
         // Then
         assertThat(response.status()).isEqualTo(TransactionStatus.COMPLETED);
@@ -174,10 +175,12 @@ class TransactionServiceIT extends IntegrationTestBase {
     void shouldFailCreateWhenAccountDoesNotExist() {
 
         // Given
-        TransactionCreateRequest request = new TransactionCreateRequest( 999L, TransactionType.DEPOSIT, BigDecimal.TEN, "Fail");
+        TransactionCreateRequest request = new TransactionCreateRequest( 999L, BigDecimal.TEN, "Fail");
 
         // When, Then
-        assertThatThrownBy(() -> transactionService.createTransaction(request))
+        assertThatThrownBy(() -> transactionService.deposit(request))
+                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> transactionService.withdrawal(request))
                 .isInstanceOf(NotFoundException.class);
     }
 
@@ -185,10 +188,12 @@ class TransactionServiceIT extends IntegrationTestBase {
     void shouldFailCreateWhenAmountIsNegativeOrZero() {
 
         // Given
-        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), TransactionType.DEPOSIT, BigDecimal.ZERO, "Zero");
+        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), BigDecimal.ZERO, "Zero");
 
         // When, Then
-        assertThatThrownBy(() -> transactionService.createTransaction(request))
+        assertThatThrownBy(() -> transactionService.deposit(request))
+                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> transactionService.withdrawal(request))
                 .isInstanceOf(BadRequestException.class);
     }
 
@@ -196,10 +201,10 @@ class TransactionServiceIT extends IntegrationTestBase {
     void shouldFailCreateWhenInsufficientFunds() {
 
         // Given
-        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), TransactionType.WITHDRAWAL, BigDecimal.valueOf(5000), "Big withdraw");
+        TransactionCreateRequest request = new TransactionCreateRequest(account.getId(), BigDecimal.valueOf(5000), "Big withdraw");
 
         // When, Then
-        assertThatThrownBy(() -> transactionService.createTransaction(request))
+        assertThatThrownBy(() -> transactionService.withdrawal(request))
                 .isInstanceOf(BadRequestException.class);
     }
 
@@ -337,5 +342,71 @@ class TransactionServiceIT extends IntegrationTestBase {
         // When, Then
         assertThatThrownBy(() -> transactionService.createTransfer(request))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void concurrentDeposit_shouldThrowOptimisticLockException() throws InterruptedException {
+
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(2);
+
+        AtomicInteger successCount = new AtomicInteger();
+        AtomicInteger failureCount = new AtomicInteger();
+
+        Runnable task = () -> {
+            try {
+                startLatch.await();
+                transactionService.deposit(new TransactionCreateRequest(account.getId(), BigDecimal.valueOf(500), "Deposit"));
+                successCount.incrementAndGet();
+            } catch (Exception e) {
+                failureCount.incrementAndGet();
+            } finally {
+                doneLatch.countDown();
+            }
+        };
+
+        new Thread(task).start();
+        new Thread(task).start();
+
+        startLatch.countDown();
+        doneLatch.await();
+
+        // Jedna transakcija mora da uspe, druga da fail-uje zbog optimistic lock
+        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(failureCount.get()).isEqualTo(1);
+
+        Account updatedAccount = accountRepository.findById(account.getId()).orElseThrow();
+        assertThat(updatedAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1500)); // 1000 + 500
+    }
+
+    @Test
+    void concurrentWithdrawal_shouldBeSerialized_withPessimisticLock() throws InterruptedException {
+
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(2);
+
+        Runnable task = () -> {
+            try {
+                startLatch.await();
+                transactionService.withdrawal(new TransactionCreateRequest(account.getId(), BigDecimal.valueOf(700), "ATM"));
+            } catch (Exception e) {
+                // Druga transakcija će baciti BadRequestException jer nema dovoljno sredstava
+                assertThat(e).isInstanceOf(BadRequestException.class);
+            } finally {
+                doneLatch.countDown();
+            }
+        };
+
+        Thread t1 = new Thread(task);
+        Thread t2 = new Thread(task);
+        t1.start();
+        t2.start();
+
+        startLatch.countDown();
+        doneLatch.await();
+
+        // Jedan withdrawal uspe, drugi mora da fail-uje jer nema dovoljno sredstava
+        Account updatedAccount = accountRepository.findById(account.getId()).orElseThrow();
+        assertThat(updatedAccount.getBalance()).isEqualByComparingTo("300");
     }
 }

@@ -70,21 +70,22 @@ class TransactionStatusServiceIT extends IntegrationTestBase {
         // Given
         TransactionCreateRequest request = new TransactionCreateRequest(
                 account.getId(),
-                TransactionType.DEPOSIT,
                 BigDecimal.valueOf(100),
                 "Initial deposit"
         );
 
         // When
-        Transaction transaction = transactionStatusService.createPendingTransaction(request, account);
+        Transaction transaction = transactionStatusService.createPendingTransaction(request, account, TransactionType.DEPOSIT);
 
         // Then
         assertThat(transaction.getId()).isNotNull();
         assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.PENDING);
+        assertThat(transaction.getType()).isEqualTo(TransactionType.DEPOSIT);
         assertThat(transaction.getAccount().getId()).isEqualTo(account.getId());
 
         Transaction persistedTransaction = transactionRepository.findById(transaction.getId()).orElseThrow();
         assertThat(persistedTransaction.getStatus()).isEqualTo(TransactionStatus.PENDING);
+        assertThat(persistedTransaction.getType()).isEqualTo(TransactionType.DEPOSIT);
         assertThat(persistedTransaction.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(100));
     }
 

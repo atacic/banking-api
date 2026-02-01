@@ -21,9 +21,15 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody @Valid TransactionCreateRequest request) {
-        TransactionResponse response = transactionService.createTransaction(request);
+    @PostMapping("/deposit")
+    public ResponseEntity<TransactionResponse> deposit(@RequestBody @Valid TransactionCreateRequest request) {
+        TransactionResponse response = transactionService.deposit(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/withdrawal")
+    public ResponseEntity<TransactionResponse> withdrawal(@RequestBody @Valid TransactionCreateRequest request) {
+        TransactionResponse response = transactionService.withdrawal(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 

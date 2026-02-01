@@ -51,8 +51,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Transactional
-    public TransactionResponse createTransaction(TransactionCreateRequest request) {
-
+    public TransactionResponse deposit(TransactionCreateRequest request) {
         Account account = accountRepository.findById(request.accountId())
                 .orElseThrow(() -> new NotFoundException("Account with id: " + request.accountId() + " not found"));
 
@@ -60,24 +59,12 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Amount must be positive");
         }
         // Create transaction with PENDING status
-        Transaction transaction = transactionStatusService.createPendingTransaction(request, account);
+        Transaction transaction = transactionStatusService.createPendingTransaction(request, account, TransactionType.DEPOSIT);
 
         try {
-            // Calculate new balance
-            BigDecimal newBalance;
 
-            switch (request.type()) {
-                case DEPOSIT -> {
-                    newBalance = account.getBalance().add(request.amount());
-                }
-                case WITHDRAWAL -> {
-                    if (account.getBalance().compareTo(request.amount()) < 0) {
-                        throw new BadRequestException("Insufficient funds");
-                    }
-                    newBalance = account.getBalance().subtract(request.amount());
-                }
-                default -> throw new BadRequestException("Unsupported transaction type");
-            }
+            BigDecimal newBalance;
+            newBalance = account.getBalance().add(request.amount());
 
             account.setBalance(newBalance);
             transaction.setBalanceAfter(newBalance);
@@ -89,6 +76,50 @@ public class TransactionServiceImpl implements TransactionService {
         } catch (RuntimeException exception) {
             transactionStatusService.markTransactionFailed(transaction.getId(), exception.getMessage());
             throw exception;
+        }
+    }
+
+    @Transactional // lock is released when transaction is over (commit or rollback)
+    public TransactionResponse withdrawal(TransactionCreateRequest request) {
+
+        Account account = accountRepository.findByIdWithLock(request.accountId())
+                .orElseThrow(() -> new NotFoundException("Account with id: " + request.accountId() + " not found"));
+
+        if (request.amount() != null && request.amount().signum() <= 0) {
+            throw new BadRequestException("Amount must be positive");
+        }
+        // Create transaction with PENDING status
+        Transaction transaction = transactionStatusService.createPendingTransaction(request, account, TransactionType.WITHDRAWAL);
+
+        try {
+
+            BigDecimal newBalance;
+
+            if (account.getBalance().compareTo(request.amount()) < 0) {
+                throw new BadRequestException("Insufficient funds");
+            }
+            newBalance = account.getBalance().subtract(request.amount());
+
+//            simulateSlowProcessing();
+
+            account.setBalance(newBalance);
+            transaction.setBalanceAfter(newBalance);
+            transaction.setStatus(TransactionStatus.COMPLETED);
+            transactionRepository.save(transaction);
+
+            return mapper.transactionToTransactionResponse(transaction);
+
+        } catch (RuntimeException exception) {
+            transactionStatusService.markTransactionFailed(transaction.getId(), exception.getMessage());
+            throw exception;
+        }
+    }
+
+    private void simulateSlowProcessing() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

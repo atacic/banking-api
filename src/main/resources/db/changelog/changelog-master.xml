@@ -13,6 +13,7 @@
     <include file="/db/changelog/ddl/changelog-change-account-status-column-name-and-type-06-12-25.xml"/>
     <include file="/db/changelog/ddl/changelog-account-id-set-auto-increment-06-12-25.xml"/>
     <include file="/db/changelog/ddl/changelog-transaction-table-columns-constraints-update-14-12-25.xml"/>
+    <include file="/db/changelog/ddl/changelog-account-table-add-version-column-28-01-26.xml"/>
 
     <!-- DMLs -->
     <include file="/db/changelog/dml/changelog-insert-first-roles.xml"/>

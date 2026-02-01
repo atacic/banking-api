@@ -35,6 +35,9 @@ public class Account implements Serializable {
     @Column(name = "status", nullable = false, length = 20)
     private AccountStatus status = AccountStatus.ACTIVE;
 
+    @Version
+    private Long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

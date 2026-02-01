@@ -1,7 +1,7 @@
 package com.aleksa.banking_api.security;
 
+import com.aleksa.banking_api.exception.response.ExceptionResponse;
 import com.google.gson.Gson;
-import com.aleksa.banking_api.exception.response.UnauthorizedResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,7 +19,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
 
-        UnauthorizedResponse unauthorizedResponse = new UnauthorizedResponse(authException.getMessage());
+        ExceptionResponse unauthorizedResponse = new ExceptionResponse(authException.getMessage());
         String jsonUnauthorizedResponse = new Gson().toJson(unauthorizedResponse);
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

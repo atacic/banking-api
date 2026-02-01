@@ -5,6 +5,7 @@ import com.aleksa.banking_api.mapper.TransactionMapper;
 import com.aleksa.banking_api.model.Account;
 import com.aleksa.banking_api.model.Transaction;
 import com.aleksa.banking_api.model.enums.TransactionStatus;
+import com.aleksa.banking_api.model.enums.TransactionType;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,9 @@ public class TransactionStatusService {
     private final TransactionMapper mapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Transaction createPendingTransaction(TransactionCreateRequest request, Account account) {
+    public Transaction createPendingTransaction(TransactionCreateRequest request, Account account, TransactionType transactionType) {
         Transaction transaction = mapper.transactionCreateRequestToTransaction(request);
+        transaction.setType(transactionType);
         transaction.setAccount(account);
         transaction.setStatus(TransactionStatus.PENDING);
         return transactionRepository.save(transaction);

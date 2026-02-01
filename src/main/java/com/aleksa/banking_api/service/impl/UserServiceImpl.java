@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = TOKEN_PREFIX + jwtTokenProvider.generateToken(authentication);
+        String jwt = jwtTokenProvider.generateToken(authentication);
 
         return new LoginResponse(jwt, true);
     }
