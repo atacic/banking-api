@@ -1,5 +1,6 @@
 package com.aleksa.banking_api.service.impl;
 
+import com.aleksa.banking_api.config.RedisConfig;
 import com.aleksa.banking_api.dto.request.AccountCreateRequest;
 import com.aleksa.banking_api.dto.request.AccountPatchRequest;
 import com.aleksa.banking_api.dto.response.AccountResponse;
@@ -14,6 +15,8 @@ import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +53,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#accountId")
     public AccountResponse patchAccount(Long accountId, AccountPatchRequest request) {
 
         Account account = accountRepository.findById(accountId).orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
@@ -78,7 +82,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
+    @Cacheable(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#accountId")
     public AccountResponse getAccountById(Long accountId, User authUser) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
@@ -93,13 +98,15 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<AccountResponse> getAllAccounts() {
         List<Account> accounts = accountRepository.findAll();
         return mapper.accountsToAccountResponses(accounts);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#accountId")
     public void deleteAccount(Long accountId) {
         accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
