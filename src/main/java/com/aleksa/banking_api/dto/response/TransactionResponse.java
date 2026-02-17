@@ -15,4 +15,4 @@ public record TransactionResponse(
         String description,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        Long accountId) { }
+        Long accountId) implements CacheableResponse { }

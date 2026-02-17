@@ -1,5 +1,6 @@
 package com.aleksa.banking_api.service.impl;
 
+import com.aleksa.banking_api.config.RedisConfig;
 import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
 import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
 import com.aleksa.banking_api.dto.request.TransferCreateRequest;
@@ -16,6 +17,9 @@ import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +35,8 @@ public class TransactionServiceImpl implements TransactionService {
     private final AccountRepository accountRepository;
     private final TransactionMapper mapper;
 
-    @Transactional
+    @Transactional(readOnly = true)
+    @Cacheable(value = RedisConfig.CACHE_NAME_TRANSACTIONS, key = "#transactionId")
     public TransactionResponse getTransactionById(Long transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new NotFoundException("Transaction with id=" + transactionId + " does not exist"));
@@ -39,7 +44,7 @@ public class TransactionServiceImpl implements TransactionService {
         return mapper.transactionToTransactionResponse(transaction);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<TransactionResponse> getTransactionsByAccountId(Long accountId) {
         List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
 
@@ -51,6 +56,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#request.accountId()")
     public TransactionResponse deposit(TransactionCreateRequest request) {
         Account account = accountRepository.findById(request.accountId())
                 .orElseThrow(() -> new NotFoundException("Account with id: " + request.accountId() + " not found"));
@@ -69,6 +75,8 @@ public class TransactionServiceImpl implements TransactionService {
             account.setBalance(newBalance);
             transaction.setBalanceAfter(newBalance);
             transaction.setStatus(TransactionStatus.COMPLETED);
+
+            accountRepository.save(account);
             transactionRepository.save(transaction);
 
             return mapper.transactionToTransactionResponse(transaction);
@@ -80,6 +88,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Transactional // lock is released when transaction is over (commit or rollback)
+    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#request.accountId()")
     public TransactionResponse withdrawal(TransactionCreateRequest request) {
 
         Account account = accountRepository.findByIdWithLock(request.accountId())
@@ -125,6 +134,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = RedisConfig.CACHE_NAME_TRANSACTIONS, key = "#transactionId")
     public TransactionResponse patchTransaction(Long transactionId, TransactionPatchRequest request) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new NotFoundException("Transaction with id: " + transactionId + " not found"));
@@ -143,6 +153,16 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(
+                    value = RedisConfig.CACHE_NAME_ACCOUNTS,
+                    key = "#request.fromAccountNumber()"
+            ),
+            @CacheEvict(
+                    value = RedisConfig.CACHE_NAME_ACCOUNTS,
+                    key = "#request.toAccountNumber()"
+            )
+    })
     public TransferResponse createTransfer(TransferCreateRequest request) {
         Account fromAccount = accountRepository.findByAccountNumber(request.fromAccountNumber())
                 .orElseThrow(() -> new NotFoundException("Source account not found"));
