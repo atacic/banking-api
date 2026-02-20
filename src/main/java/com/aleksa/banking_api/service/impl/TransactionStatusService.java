@@ -12,16 +12,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class TransactionStatusService {
 
     private final TransactionRepository transactionRepository;
-    private final TransactionMapper mapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Transaction createPendingTransaction(TransactionCreateRequest request, Account account, TransactionType transactionType) {
-        Transaction transaction = mapper.transactionCreateRequestToTransaction(request);
+    public Transaction createPendingTransaction(String description, BigDecimal amount, TransactionType transactionType, Account account) {
+        Transaction transaction = new Transaction();
+        transaction.setDescription(description);
+        transaction.setAmount(amount);
         transaction.setType(transactionType);
         transaction.setAccount(account);
         transaction.setStatus(TransactionStatus.PENDING);

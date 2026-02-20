@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="create-transfer-table-1771458731882-1" author="aleksa">
+
+        <createTable tableName="transfer">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="from_account_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_transfer_from_account"
+                             referencedTableName="account"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="to_account_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="fk_transfer_to_account"
+                             referencedTableName="account"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="amount" type="numeric(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(30)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference" type="varchar(64)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_transfer_from_account"
+                     tableName="transfer">
+            <column name="from_account_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_transfer_to_account"
+                     tableName="transfer">
+            <column name="to_account_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="add-transfer-id-to-transaction-1771459240875-1" author="aleksa">
+
+        <addColumn tableName="transaction">
+            <column name="transfer_id" type="bigint">
+                <constraints nullable="true"
+                             foreignKeyName="fk_transaction_transfer"
+                             referencedTableName="transfer"
+                             referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+
+        <createIndex indexName="idx_transaction_transfer"
+                     tableName="transaction">
+            <column name="transfer_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -33,12 +33,6 @@ public class TransactionController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping("/transfer")
-    public ResponseEntity<TransferResponse> createTransfer(@RequestBody @Valid TransferCreateRequest request) {
-        TransferResponse response = transactionService.createTransfer(request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
     @GetMapping("/{transactionId}")
     public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable Long transactionId) {
        return ResponseEntity.ok(transactionService.getTransactionById(transactionId));

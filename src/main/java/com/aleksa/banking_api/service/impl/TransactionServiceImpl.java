@@ -3,9 +3,7 @@ package com.aleksa.banking_api.service.impl;
 import com.aleksa.banking_api.config.RedisConfig;
 import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
 import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
-import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransactionResponse;
-import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.exception.BadRequestException;
 import com.aleksa.banking_api.exception.NotFoundException;
 import com.aleksa.banking_api.mapper.TransactionMapper;
@@ -19,7 +17,6 @@ import com.aleksa.banking_api.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,7 +62,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Amount must be positive");
         }
         // Create transaction with PENDING status
-        Transaction transaction = transactionStatusService.createPendingTransaction(request, account, TransactionType.DEPOSIT);
+        Transaction transaction = transactionStatusService.createPendingTransaction(request.description(), request.amount(), TransactionType.DEPOSIT, account);
 
         try {
 
@@ -98,7 +95,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Amount must be positive");
         }
         // Create transaction with PENDING status
-        Transaction transaction = transactionStatusService.createPendingTransaction(request, account, TransactionType.WITHDRAWAL);
+        Transaction transaction = transactionStatusService.createPendingTransaction(request.description(), request.amount(), TransactionType.WITHDRAWAL, account);
 
         try {
 
@@ -149,70 +146,5 @@ public class TransactionServiceImpl implements TransactionService {
 
         transaction = transactionRepository.save(transaction);
         return mapper.transactionToTransactionResponse(transaction);
-    }
-
-    @Override
-    @Transactional
-    @Caching(evict = {
-            @CacheEvict(
-                    value = RedisConfig.CACHE_NAME_ACCOUNTS,
-                    key = "#request.fromAccountNumber()"
-            ),
-            @CacheEvict(
-                    value = RedisConfig.CACHE_NAME_ACCOUNTS,
-                    key = "#request.toAccountNumber()"
-            )
-    })
-    public TransferResponse createTransfer(TransferCreateRequest request) {
-        Account fromAccount = accountRepository.findByAccountNumber(request.fromAccountNumber())
-                .orElseThrow(() -> new NotFoundException("Source account not found"));
-
-        Account toAccount = accountRepository.findByAccountNumber(request.toAccountNumber())
-                .orElseThrow(() -> new NotFoundException("Target account not found"));
-
-        if (fromAccount.getBalance().compareTo(request.amount()) < 0) {
-            throw new BadRequestException("Insufficient funds in source account");
-        }
-
-        // Source transaction
-        Transaction transactionOut = new Transaction();
-        transactionOut.setAccount(fromAccount);
-        transactionOut.setType(TransactionType.TRANSFER_OUT);
-        transactionOut.setAmount(request.amount());
-        transactionOut.setStatus(TransactionStatus.PENDING);
-        transactionOut.setDescription(request.description());
-        transactionOut.setBalanceAfter(fromAccount.getBalance().subtract(request.amount()));
-        transactionRepository.save(transactionOut);
-
-        // Target transaction
-        Transaction transactionIn = new Transaction();
-        transactionIn.setAccount(toAccount);
-        transactionIn.setType(TransactionType.TRANSFER_IN);
-        transactionIn.setAmount(request.amount());
-        transactionIn.setStatus(TransactionStatus.PENDING);
-        transactionIn.setDescription(request.description());
-        transactionIn.setBalanceAfter(toAccount.getBalance().add(request.amount()));
-        transactionRepository.save(transactionIn);
-
-        // Update accounts balances
-        fromAccount.setBalance(fromAccount.getBalance().subtract(request.amount()));
-        toAccount.setBalance(toAccount.getBalance().add(request.amount()));
-        accountRepository.save(fromAccount);
-        accountRepository.save(toAccount);
-
-        // FINALIZE transactions
-        transactionOut.setStatus(TransactionStatus.COMPLETED);
-        transactionIn.setStatus(TransactionStatus.COMPLETED);
-        transactionRepository.save(transactionOut);
-        transactionRepository.save(transactionIn);
-
-        return new TransferResponse(
-                transactionOut.getId(),
-                transactionIn.getId(),
-                request.amount(),
-                fromAccount.getBalance(),
-                toAccount.getBalance(),
-                TransactionStatus.COMPLETED
-        );
     }
 }
