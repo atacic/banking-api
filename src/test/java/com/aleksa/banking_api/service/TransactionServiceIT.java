@@ -19,6 +19,7 @@ import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.service.impl.TransactionServiceImpl;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,13 @@ class TransactionServiceIT extends IntegrationTestBase {
         account.setStatus(AccountStatus.ACTIVE);
         account.setUser(user);
         account = accountRepository.save(account);
+    }
+
+    @AfterEach
+    void clean() {
+        transactionRepository.deleteAll();
+        accountRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @Test

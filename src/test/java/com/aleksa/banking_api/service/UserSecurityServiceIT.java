@@ -5,6 +5,7 @@ import com.aleksa.banking_api.model.User;
 import com.aleksa.banking_api.model.enums.UserStatus;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.service.impl.UserSecurityService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,11 @@ class UserSecurityServiceIT extends IntegrationTestBase {
         );
 
         user = userRepository.save(user);
+    }
+
+    @AfterEach
+    void clean() {
+        userRepository.deleteAll();
     }
 
     @Test

@@ -13,6 +13,7 @@ import com.aleksa.banking_api.model.enums.UserStatus;
 import com.aleksa.banking_api.repoistory.RoleRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.service.impl.UserServiceImpl;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,12 @@ class UserServiceIT extends IntegrationTestBase {
         Role userRole = new Role();
         userRole.setRoleName(RoleName.ROLE_USER);
         roleRepository.save(userRole);
+    }
+
+    @AfterEach
+    void clean() {
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
     }
 
     @Test

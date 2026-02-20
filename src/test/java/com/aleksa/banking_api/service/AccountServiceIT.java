@@ -14,6 +14,7 @@ import com.aleksa.banking_api.model.enums.UserStatus;
 import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.service.impl.AccountServiceImpl;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,12 @@ class AccountServiceIT extends IntegrationTestBase {
                 UserStatus.ACTIVE
         );
         user = userRepository.save(user);
+    }
+
+    @AfterEach
+    void clean() {
+        accountRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @Test
