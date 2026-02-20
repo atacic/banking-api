@@ -39,16 +39,6 @@ public class TransferServiceImpl implements TransferService {
     private final TransferMapper mapper;
 
     @Transactional
-//    @Caching(evict = { // TODO
-//            @CacheEvict(
-//                    value = RedisConfig.CACHE_NAME_ACCOUNTS,
-//                    key = "#request.fromAccountNumber()"
-//            ),
-//            @CacheEvict(
-//                    value = RedisConfig.CACHE_NAME_ACCOUNTS,
-//                    key = "#request.toAccountNumber()"
-//            )
-//    })
     public TransferResponse createTransfer(TransferCreateRequest request) {
 
         List<Account> accounts = accountRepository.findBothByAccountNumberWithLock(request.fromAccountNumber(), request.toAccountNumber());
@@ -97,6 +87,8 @@ public class TransferServiceImpl implements TransferService {
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer = transferRepository.save(transfer);
 
+            evictAccountCaches(fromAccount.getId(), toAccount.getId());
+
             return mapper.transferToTransferResponse(transfer);
 
         } catch (RuntimeException exception) {
@@ -106,4 +98,10 @@ public class TransferServiceImpl implements TransferService {
             throw exception;
         }
     }
+
+    @Caching(evict = {
+            @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#fromAccountId"),
+            @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#toAccountId")
+    })
+    public void evictAccountCaches(Long fromAccountId, Long toAccountId) {}
 }
