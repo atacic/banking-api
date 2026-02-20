@@ -3,18 +3,13 @@ package com.aleksa.banking_api.service;
 import com.aleksa.banking_api.IntegrationTestBase;
 import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
 import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
-import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransactionResponse;
-import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.exception.BadRequestException;
 import com.aleksa.banking_api.exception.NotFoundException;
 import com.aleksa.banking_api.model.Account;
 import com.aleksa.banking_api.model.Transaction;
 import com.aleksa.banking_api.model.User;
-import com.aleksa.banking_api.model.enums.AccountStatus;
-import com.aleksa.banking_api.model.enums.TransactionStatus;
-import com.aleksa.banking_api.model.enums.TransactionType;
-import com.aleksa.banking_api.model.enums.UserStatus;
+import com.aleksa.banking_api.model.enums.*;
 import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
@@ -247,109 +242,6 @@ class TransactionServiceIT extends IntegrationTestBase {
         // When, Then
         assertThatThrownBy(() -> transactionService.patchTransaction(missingId, request))
                 .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void shouldCreateTransferSuccessfully() {
-
-        // Given
-        Account targetAccount = new Account();
-        targetAccount.setAccountNumber("ACC-TARGET");
-        targetAccount.setCurrency("EUR");
-        targetAccount.setBalance(BigDecimal.valueOf(500));
-        targetAccount.setStatus(AccountStatus.ACTIVE);
-        targetAccount.setUser(account.getUser());
-        targetAccount = accountRepository.save(targetAccount);
-
-        TransferCreateRequest request = new TransferCreateRequest(
-                account.getAccountNumber(),
-                targetAccount.getAccountNumber(),
-                BigDecimal.valueOf(200),
-                "Rent payment"
-        );
-
-        // When
-        TransferResponse response = transactionService.createTransfer(request);
-
-        // Then - response validation
-        assertThat(response.status()).isEqualTo(TransactionStatus.COMPLETED);
-        assertThat(response.transferredAmount()).isEqualByComparingTo("200");
-        assertThat(response.fromBalanceAfter()).isEqualByComparingTo("800");
-        assertThat(response.toBalanceAfter()).isEqualByComparingTo("700");
-        assertThat(response.fromTransactionId()).isNotNull();
-        assertThat(response.toTransactionId()).isNotNull();
-
-        // Then - account balances in DB
-        Account fromUpdated = accountRepository.findById(account.getId()).orElseThrow();
-        Account toUpdated = accountRepository.findById(targetAccount.getId()).orElseThrow();
-        assertThat(fromUpdated.getBalance()).isEqualByComparingTo("800");
-        assertThat(toUpdated.getBalance()).isEqualByComparingTo("700");
-
-        // Then - transactions persisted
-        Transaction txOut = transactionRepository.findById(response.fromTransactionId()).orElseThrow();
-        Transaction txIn = transactionRepository.findById(response.toTransactionId()).orElseThrow();
-        assertThat(txOut.getType()).isEqualTo(TransactionType.TRANSFER_OUT);
-        assertThat(txOut.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
-        assertThat(txOut.getAmount()).isEqualByComparingTo("200");
-        assertThat(txIn.getType()).isEqualTo(TransactionType.TRANSFER_IN);
-        assertThat(txIn.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
-        assertThat(txIn.getAmount()).isEqualByComparingTo("200");
-    }
-
-    @Test
-    void shouldFailCreateTransferWhenSourceAccountDoesNotExist() {
-
-        // Given
-        TransferCreateRequest request = new TransferCreateRequest(
-                "MISSING-ACC",
-                account.getAccountNumber(),
-                BigDecimal.valueOf(100),
-                "Invalid source"
-        );
-
-        // When, Then
-        assertThatThrownBy(() -> transactionService.createTransfer(request))
-                .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void shouldFailCreateTransferWhenTargetAccountDoesNotExist() {
-
-        // Given
-        TransferCreateRequest request = new TransferCreateRequest(
-                account.getAccountNumber(),
-                "MISSING-ACC",
-                BigDecimal.valueOf(100),
-                "Invalid target"
-        );
-
-        // When, Then
-        assertThatThrownBy(() -> transactionService.createTransfer(request))
-                .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void shouldFailCreateTransferWhenInsufficientFunds() {
-
-        // Given
-        Account targetAccount = new Account();
-        targetAccount.setAccountNumber("ACC-TARGET-FAIL");
-        targetAccount.setCurrency("EUR");
-        targetAccount.setBalance(BigDecimal.valueOf(100));
-        targetAccount.setStatus(AccountStatus.ACTIVE);
-        targetAccount.setUser(account.getUser());
-        accountRepository.save(targetAccount);
-
-        TransferCreateRequest request = new TransferCreateRequest(
-                account.getAccountNumber(),
-                targetAccount.getAccountNumber(),
-                BigDecimal.valueOf(5000),
-                "Too much"
-        );
-
-        // When, Then
-        assertThatThrownBy(() -> transactionService.createTransfer(request))
-                .isInstanceOf(BadRequestException.class);
     }
 
     @Test

@@ -42,6 +42,10 @@ public class Transaction {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transfer_id", nullable = false)
+    private Transfer transfer;
+
     public Transaction(LocalDateTime createdAt, Long id, TransactionType type, BigDecimal amount, BigDecimal balanceAfter, String description, LocalDateTime updatedAt, Account account) {
         this.createdAt = createdAt;
         this.id = id;
@@ -128,5 +132,13 @@ public class Transaction {
 
     public void setAccount(Account account) {
         this.account = account;
+    }
+
+    public Transfer getTransfer() {
+        return transfer;
+    }
+
+    public void setTransfer(Transfer transfer) {
+        this.transfer = transfer;
     }
 }

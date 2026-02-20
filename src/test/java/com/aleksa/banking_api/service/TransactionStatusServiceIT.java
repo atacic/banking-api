@@ -83,7 +83,7 @@ class TransactionStatusServiceIT extends IntegrationTestBase {
         );
 
         // When
-        Transaction transaction = transactionStatusService.createPendingTransaction(request, account, TransactionType.DEPOSIT);
+        Transaction transaction = transactionStatusService.createPendingTransaction(request.description(), request.amount(), TransactionType.DEPOSIT, account);
 
         // Then
         assertThat(transaction.getId()).isNotNull();
