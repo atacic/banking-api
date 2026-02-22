@@ -1,6 +1,5 @@
 package com.aleksa.banking_api.service.impl;
 
-import com.aleksa.banking_api.config.RedisConfig;
 import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.exception.BadRequestException;
@@ -17,8 +16,6 @@ import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.repoistory.TransferRepository;
 import com.aleksa.banking_api.service.TransferService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +34,7 @@ public class TransferServiceImpl implements TransferService {
     private final TransactionRepository transactionRepository;
     private final TransferRepository transferRepository;
     private final TransferMapper mapper;
+    private final AccountCacheService accountCacheService;
 
     @Transactional
     public TransferResponse createTransfer(TransferCreateRequest request) {
@@ -53,6 +51,10 @@ public class TransferServiceImpl implements TransferService {
             throw new NotFoundException("Source account not found");
         } else if (toAccount == null) {
             throw new NotFoundException("Target account not found");
+        }
+
+        if (!fromAccount.getCurrency().equalsIgnoreCase(toAccount.getCurrency())) {
+            throw new BadRequestException("Source account currency does not match target account currency");
         }
 
         if (fromAccount.getBalance().compareTo(request.amount()) < 0) {
@@ -74,6 +76,8 @@ public class TransferServiceImpl implements TransferService {
             transactionIn.setBalanceAfter(toAccount.getBalance().add(request.amount()));
             transactionOut.setStatus(TransactionStatus.COMPLETED);
             transactionIn.setStatus(TransactionStatus.COMPLETED);
+            transactionOut.setTransfer(transfer);
+            transactionIn.setTransfer(transfer);
             transactionRepository.save(transactionOut);
             transactionRepository.save(transactionIn);
 
@@ -87,7 +91,7 @@ public class TransferServiceImpl implements TransferService {
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer = transferRepository.save(transfer);
 
-            evictAccountCaches(fromAccount.getId(), toAccount.getId());
+            accountCacheService.evictTwoAccounts(fromAccount.getId(), toAccount.getId());
 
             return mapper.transferToTransferResponse(transfer);
 
@@ -98,10 +102,4 @@ public class TransferServiceImpl implements TransferService {
             throw exception;
         }
     }
-
-    @Caching(evict = {
-            @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#fromAccountId"),
-            @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#toAccountId")
-    })
-    public void evictAccountCaches(Long fromAccountId, Long toAccountId) {}
 }

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -35,17 +36,20 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public AccountResponse createAccount(AccountCreateRequest request) {
 
+        final String accountNumber = "ACC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
         Account account = mapper.accountCreateRequestToAccount(request);
 
         User user = userRepository.findByEmail(request.userEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User with email " + request.userEmail() + " not found"));
 
-        accountRepository.findByAccountNumber(request.accountNumber()).ifPresent((presentedAccount) -> {
+        accountRepository.findByAccountNumber(accountNumber).ifPresent((presentedAccount) -> {
             throw new AccountExistException("Account with number: " + presentedAccount.getAccountNumber() + " already exists");
         });
 
         account.setUser(user);
         account.setStatus(AccountStatus.ACTIVE);
+        account.setAccountNumber(accountNumber);
 
         account = accountRepository.save(account);
         return mapper.accountToAccountResponse(account);
@@ -57,13 +61,6 @@ public class AccountServiceImpl implements AccountService {
     public AccountResponse patchAccount(Long accountId, AccountPatchRequest request) {
 
         Account account = accountRepository.findById(accountId).orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
-
-        if (request.accountNumber() != null) {
-            accountRepository.findByAccountNumber(request.accountNumber()).ifPresent((presentedAccount) -> {
-                throw new AccountExistException("Account with number: " + presentedAccount.getAccountNumber() + " already exists");
-            });
-            account.setAccountNumber(request.accountNumber());
-        }
 
         if (request.currency() != null) {
             account.setCurrency(request.currency());

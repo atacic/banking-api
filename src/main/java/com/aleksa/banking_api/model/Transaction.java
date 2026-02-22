@@ -43,7 +43,7 @@ public class Transaction {
     private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "transfer_id", nullable = false)
+    @JoinColumn(name = "transfer_id", nullable = true)
     private Transfer transfer;
 
     public Transaction(LocalDateTime createdAt, Long id, TransactionType type, BigDecimal amount, BigDecimal balanceAfter, String description, LocalDateTime updatedAt, Account account) {

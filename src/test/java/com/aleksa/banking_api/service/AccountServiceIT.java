@@ -4,7 +4,6 @@ import com.aleksa.banking_api.IntegrationTestBase;
 import com.aleksa.banking_api.dto.request.AccountCreateRequest;
 import com.aleksa.banking_api.dto.request.AccountPatchRequest;
 import com.aleksa.banking_api.dto.response.AccountResponse;
-import com.aleksa.banking_api.exception.AccountExistException;
 import com.aleksa.banking_api.exception.ForbiddenException;
 import com.aleksa.banking_api.exception.NotFoundException;
 import com.aleksa.banking_api.model.Account;
@@ -68,48 +67,29 @@ class AccountServiceIT extends IntegrationTestBase {
     void shouldCreateAccountSuccessfully() {
 
         // Given
-        AccountCreateRequest request = new AccountCreateRequest("ACC-111", "EUR", BigDecimal.valueOf(500), USER_EMAIL);
+        AccountCreateRequest request = new AccountCreateRequest("EUR", BigDecimal.valueOf(500), USER_EMAIL);
 
         // When
         AccountResponse response = accountService.createAccount(request);
 
         // Then
         assertThat(response).isNotNull();
-        assertThat(response.accountNumber()).isEqualTo("ACC-111");
+        assertThat(response.accountNumber()).isNotNull();
         assertThat(response.currency()).isEqualTo("EUR");
         assertThat(response.balance()).isEqualTo(BigDecimal.valueOf(500));
         assertThat(response.status()).isEqualTo(AccountStatus.ACTIVE);
-        assertThat(accountRepository.findByAccountNumber("ACC-111")).isPresent();
+        assertThat(accountRepository.findByAccountNumber(response.accountNumber())).isPresent();
     }
 
     @Test
     void shouldFailCreateWhenUserDoesNotExist() {
 
         // Given
-        AccountCreateRequest request = new AccountCreateRequest("ACC-222", "EUR", BigDecimal.valueOf(100), "missing@mail.com");
+        AccountCreateRequest request = new AccountCreateRequest("EUR", BigDecimal.valueOf(100), "missing@mail.com");
 
         // When, Then
         assertThatThrownBy(() -> accountService.createAccount(request))
                 .isInstanceOf(UsernameNotFoundException.class);
-    }
-
-    @Test
-    void shouldFailCreateWhenAccountNumberAlreadyExists() {
-
-        // Given
-        Account existing = new Account();
-        existing.setAccountNumber("ACC-333");
-        existing.setCurrency("EUR");
-        existing.setBalance(BigDecimal.TEN);
-        existing.setStatus(AccountStatus.ACTIVE);
-        existing.setUser(user);
-        accountRepository.save(existing);
-
-        AccountCreateRequest request = new AccountCreateRequest("ACC-333", "EUR", BigDecimal.valueOf(200), USER_EMAIL);
-
-        // When, Then
-        assertThatThrownBy(() -> accountService.createAccount(request))
-                .isInstanceOf(AccountExistException.class);
     }
 
     @Test
@@ -124,13 +104,13 @@ class AccountServiceIT extends IntegrationTestBase {
         account.setUser(user);
         account = accountRepository.save(account);
 
-        AccountPatchRequest request = new AccountPatchRequest("ACC-999", "USD", BigDecimal.valueOf(999), AccountStatus.INACTIVE);
+        AccountPatchRequest request = new AccountPatchRequest("USD", BigDecimal.valueOf(999), AccountStatus.INACTIVE);
 
         // When
         AccountResponse response = accountService.patchAccount(account.getId(), request);
 
         // Then
-        assertThat(response.accountNumber()).isEqualTo("ACC-999");
+        assertThat(response.accountNumber()).isEqualTo("ACC-444");
         assertThat(response.currency()).isEqualTo("USD");
         assertThat(response.balance()).isEqualTo(BigDecimal.valueOf(999));
         assertThat(response.status()).isEqualTo(AccountStatus.INACTIVE);
@@ -141,39 +121,11 @@ class AccountServiceIT extends IntegrationTestBase {
 
         // Given
         Long accountId = 999L;
-        AccountPatchRequest request = new AccountPatchRequest("ANY", "EUR", BigDecimal.TEN, AccountStatus.ACTIVE);
+        AccountPatchRequest request = new AccountPatchRequest("EUR", BigDecimal.TEN, AccountStatus.ACTIVE);
 
         // When, Then
         assertThatThrownBy(() -> accountService.patchAccount(accountId, request))
                 .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void shouldFailPatchWhenNewAccountNumberExists() {
-
-        // Given
-        Account acc1 = new Account();
-        acc1.setAccountNumber("ACC-1");
-        acc1.setCurrency("EUR");
-        acc1.setBalance(BigDecimal.ONE);
-        acc1.setStatus(AccountStatus.ACTIVE);
-        acc1.setUser(user);
-        accountRepository.save(acc1);
-        Account acc2 = new Account();
-        acc2.setAccountNumber("ACC-2");
-        acc2.setCurrency("EUR");
-        acc2.setBalance(BigDecimal.TEN);
-        acc2.setStatus(AccountStatus.ACTIVE);
-        acc2.setUser(user);
-        acc2 = accountRepository.save(acc2);
-
-        AccountPatchRequest patch = new AccountPatchRequest("ACC-1", null, null, null);
-
-        Long id = acc2.getId();
-
-        // When, Then
-        assertThatThrownBy(() -> accountService.patchAccount(id, patch))
-                .isInstanceOf(AccountExistException.class);
     }
 
     @Test
