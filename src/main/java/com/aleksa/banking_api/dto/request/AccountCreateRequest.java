@@ -5,11 +5,6 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
 public record AccountCreateRequest(
-//        @Pattern(
-//                regexp = "\\d{10,20}",
-//                message = "Account number must be between 10 and 20 digits")
-        @NotBlank(message = "Account number is required")
-        String accountNumber,
 
         @NotBlank(message = "Currency is required")
         @Pattern(

@@ -8,8 +8,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 
 public record AccountPatchRequest(
-//        @Pattern(regexp = "\\d{10,20}", message = "Account number must be between 10 and 20 digits")
-        String accountNumber,
 
         @Pattern(regexp = "RSD|EUR|USD", message = "Currency must be RSD, EUR or USD")
         String currency,
