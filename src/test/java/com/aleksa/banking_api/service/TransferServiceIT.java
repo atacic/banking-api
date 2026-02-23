@@ -9,6 +9,7 @@ import com.aleksa.banking_api.model.Account;
 import com.aleksa.banking_api.model.User;
 import com.aleksa.banking_api.model.enums.*;
 import com.aleksa.banking_api.repoistory.AccountRepository;
+import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.repoistory.TransferRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.service.impl.TransferServiceImpl;
@@ -39,11 +40,15 @@ class TransferServiceIT extends IntegrationTestBase {
     @Autowired
     private TransferRepository transferRepository;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
     private Account sourceAccount;
     private User testUser;
 
     @BeforeEach
     void setup() {
+        transactionRepository.deleteAll();
         transferRepository.deleteAll();
         accountRepository.deleteAll();
         userRepository.deleteAll();
@@ -70,6 +75,7 @@ class TransferServiceIT extends IntegrationTestBase {
 
     @AfterEach
     void clean() {
+        transactionRepository.deleteAll();
         transferRepository.deleteAll();
         accountRepository.deleteAll();
         userRepository.deleteAll();
