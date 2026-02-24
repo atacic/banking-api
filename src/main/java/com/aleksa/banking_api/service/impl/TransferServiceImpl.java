@@ -16,6 +16,7 @@ import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.repoistory.TransferRepository;
 import com.aleksa.banking_api.service.TransferService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransferServiceImpl implements TransferService {
@@ -38,6 +40,8 @@ public class TransferServiceImpl implements TransferService {
 
     @Transactional
     public TransferResponse createTransfer(TransferCreateRequest request) {
+
+        log.info("Transfer initiated | from={} → to={} | amount={}", request.fromAccountNumber(), request.toAccountNumber(), request.amount());
 
         List<Account> accounts = accountRepository.findBothByAccountNumberWithLock(request.fromAccountNumber(), request.toAccountNumber());
 
@@ -91,11 +95,17 @@ public class TransferServiceImpl implements TransferService {
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer = transferRepository.save(transfer);
 
+            log.info("Transfer completed | id={} | amount={} | from={} → to={}", transfer.getId(), transfer.getAmount(),
+                    request.fromAccountNumber(), request.toAccountNumber());
+
             accountCacheService.evictTwoAccounts(fromAccount.getId(), toAccount.getId());
 
             return mapper.transferToTransferResponse(transfer);
 
         } catch (RuntimeException exception) {
+            log.error("Transfer FAILED | id={} | amount={} | from={} → to={} | error={}", transfer.getId(), request.amount(),
+                    request.fromAccountNumber(), request.toAccountNumber(), exception.getMessage(), exception);
+
             transactionStatusService.markTransactionFailed(transactionOut.getId(), exception.getMessage());
             transactionStatusService.markTransactionFailed(transactionIn.getId(), exception.getMessage());
             transferStatusService.markTransferFailed(transfer.getId(), exception.getMessage());

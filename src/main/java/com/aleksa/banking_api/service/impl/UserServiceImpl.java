@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 
 import static com.aleksa.banking_api.exception.ExceptionMessages.ROLE_NOT_FOUND;
-import static com.aleksa.banking_api.security.SecurityConstants.TOKEN_PREFIX;
 
 @Service
 @RequiredArgsConstructor

@@ -15,6 +15,7 @@ import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.UserRepository;
 import com.aleksa.banking_api.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
@@ -52,6 +54,10 @@ public class AccountServiceImpl implements AccountService {
         account.setAccountNumber(accountNumber);
 
         account = accountRepository.save(account);
+
+        log.info("Account creation completed | id={} | balance={} | accountNumber={} | currency={}", account.getId(), account.getBalance(),
+                account.getAccountNumber(), account.getCurrency());
+
         return mapper.accountToAccountResponse(account);
     }
 
