@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     public RegisterResponse registerUser(RegisterRequest request) {
 
         Role role = roleRepository.findByRoleName(request.roleName())
-                .orElse(roleRepository.findByRoleName(RoleName.ROLE_USER)
+                .orElseGet(() -> roleRepository.findByRoleName(RoleName.ROLE_USER)
                         .orElseThrow(() -> new NotFoundException(ROLE_NOT_FOUND)));
 
         User user = mapper.registerRequestToUser(request);
