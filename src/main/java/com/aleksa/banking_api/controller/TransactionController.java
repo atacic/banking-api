@@ -66,7 +66,7 @@ public class TransactionController {
     @ApiResponse(responseCode = "200", description = "List of transactions")
     @GetMapping
     public ResponseEntity<List<TransactionResponse>> getTransactions(@Parameter(description = "Account ID") @RequestParam(required = false) Long accountId) {
-        return ResponseEntity.ok(transactionService.getTransactionsByAccountId(accountId));
+        return ResponseEntity.ok(transactionService.getTransactionsByAccountId(accountId)); // TODO: Domaci
     }
 
     @Operation(summary = "Partially update a transaction", description = "Partial update of transaction")

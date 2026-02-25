@@ -6,10 +6,9 @@ import com.aleksa.banking_api.model.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.springframework.data.domain.Page;
 
-import java.util.List;
-
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, imports = Page.class)
 public interface AccountMapper {
 
     Account accountCreateRequestToAccount(AccountCreateRequest request);
@@ -17,5 +16,7 @@ public interface AccountMapper {
     @Mapping(source = "user.email", target = "userEmail")
     AccountResponse accountToAccountResponse(Account account);
 
-    List<AccountResponse> accountsToAccountResponses(List<Account> accounts);
+    default Page<AccountResponse> accountsToAccountResponses(Page<Account> accounts) {
+        return accounts.map(this::accountToAccountResponse);
+    }
 }

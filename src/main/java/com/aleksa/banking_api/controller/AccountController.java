@@ -14,12 +14,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Account", description = "Endpoints for managing user accounts")
 @RestController
@@ -62,12 +62,15 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Get all accounts", description = "Returns a list of all accounts (typically admin only)")
-    @ApiResponse(responseCode = "200", description = "List of accounts",
-            content = @Content(schema = @Schema(implementation = AccountResponse.class)))
+    @Operation(summary = "Get accounts, paginated and/or sorted",
+            description = "Returns a paginated list of accounts. Supports ?page=, ?size=, ?sort= ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Paginated list of accounts",
+                    content = @Content(schema = @Schema(implementation = Page.class)))
+    })
     @GetMapping
-    public ResponseEntity<List<AccountResponse>> getAllAccounts() {
-        List<AccountResponse> responses = accountService.getAllAccounts();
+    public ResponseEntity<Page<AccountResponse>> getAccounts(Pageable pageable) {
+        Page<AccountResponse> responses = accountService.getAccounts(pageable);
         return ResponseEntity.ok(responses);
     }
 
