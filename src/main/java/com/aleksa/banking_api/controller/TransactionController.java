@@ -50,7 +50,10 @@ public class TransactionController {
     }
 
     @Operation(summary = "Get transaction by ID")
-    @ApiResponse(responseCode = "200", description = "Transaction found")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Transaction found"),
+            @ApiResponse(responseCode = "400", description = "Transaction not found")
+    })
     @GetMapping("/{transactionId}")
     public ResponseEntity<TransactionResponse> getTransactionById(@Parameter(description = "Transaction ID") @PathVariable Long transactionId) {
         return ResponseEntity.ok(transactionService.getTransactionById(transactionId));
