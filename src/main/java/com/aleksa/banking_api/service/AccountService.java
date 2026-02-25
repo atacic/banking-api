@@ -4,13 +4,13 @@ import com.aleksa.banking_api.dto.request.AccountCreateRequest;
 import com.aleksa.banking_api.dto.request.AccountPatchRequest;
 import com.aleksa.banking_api.dto.response.AccountResponse;
 import com.aleksa.banking_api.model.User;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface AccountService {
     AccountResponse createAccount(AccountCreateRequest request);
     AccountResponse patchAccount(Long accountId, AccountPatchRequest request);
     AccountResponse getAccountById(Long accountId, User authUser);
-    List<AccountResponse> getAllAccounts();
+    Page<AccountResponse> getAccounts(Pageable pageable);
     void deleteAccount(Long accountId);
 }

@@ -17,6 +17,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.math.BigDecimal;
@@ -188,7 +192,7 @@ class AccountServiceIT extends IntegrationTestBase {
     }
 
     @Test
-    void shouldReturnAllAccounts() {
+    void shouldReturnAccountsPaginated() {
 
         // Given
         Account a1 = new Account();
@@ -205,11 +209,80 @@ class AccountServiceIT extends IntegrationTestBase {
         a2.setUser(user);
         accountRepository.saveAll(List.of(a1, a2));
 
+        Pageable pageable = PageRequest.of(0, 10);
+
         // When
-        List<AccountResponse> accounts = accountService.getAllAccounts();
+        Page<AccountResponse> resultPage = accountService.getAccounts(pageable);
 
         // Then
-        assertThat(accounts).hasSize(2);
+        assertThat(resultPage.getContent()).hasSize(2);
+        assertThat(resultPage.getTotalElements()).isEqualTo(2);
+        assertThat(resultPage.getTotalPages()).isEqualTo(1);
+        assertThat(resultPage.getNumber()).isEqualTo(0);
+        assertThat(resultPage.getSize()).isEqualTo(pageable.getPageSize());
+
+        List<AccountResponse> responses = resultPage.getContent();
+        assertThat(responses)
+                .extracting(AccountResponse::accountNumber)
+                .containsExactlyInAnyOrder("X1", "X2");
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenPageIsTooHigh() {
+
+        // Given
+        Account a1 = new Account();
+        a1.setAccountNumber("X1");
+        a1.setCurrency("EUR");
+        a1.setBalance(BigDecimal.ONE);
+        a1.setStatus(AccountStatus.ACTIVE);
+        a1.setUser(user);
+        Account a2 = new Account();
+        a2.setAccountNumber("X2");
+        a2.setCurrency("EUR");
+        a2.setBalance(BigDecimal.TEN);
+        a2.setStatus(AccountStatus.ACTIVE);
+        a2.setUser(user);
+        accountRepository.saveAll(List.of(a1, a2));
+
+        Pageable pageable = PageRequest.of(10, 10);
+
+        // When
+        Page<AccountResponse> page = accountService.getAccounts(pageable);
+
+        // Then
+        assertThat(page.getContent()).isEmpty();
+        assertThat(page.getTotalElements()).isEqualTo(2);
+        assertThat(page.getTotalPages()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldSortByBalanceDesc() {
+
+        // Given
+        Account a1 = new Account();
+        a1.setAccountNumber("X1");
+        a1.setCurrency("EUR");
+        a1.setBalance(BigDecimal.ONE);
+        a1.setStatus(AccountStatus.ACTIVE);
+        a1.setUser(user);
+        Account a2 = new Account();
+        a2.setAccountNumber("X2");
+        a2.setCurrency("EUR");
+        a2.setBalance(BigDecimal.TEN);
+        a2.setStatus(AccountStatus.ACTIVE);
+        a2.setUser(user);
+        accountRepository.saveAll(List.of(a1, a2));
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("balance").descending());
+
+        // When
+        Page<AccountResponse> page = accountService.getAccounts(pageable);
+
+        // Then
+        List<AccountResponse> responses = page.getContent();
+        assertThat(responses.getFirst().balance()).isEqualByComparingTo(BigDecimal.valueOf(10));
+        assertThat(responses.getLast().balance()).isEqualByComparingTo(BigDecimal.valueOf(1));
     }
 
     @Test
@@ -234,7 +307,7 @@ class AccountServiceIT extends IntegrationTestBase {
         accountService.deleteAccount(a1.getId());
 
         // Then
-        List<AccountResponse> accounts = accountService.getAllAccounts();
+        List<AccountResponse> accounts = accountService.getAccounts(PageRequest.of(0, 10)).getContent();
         assertThat(accounts).hasSize(1);
         assertThat(accounts.getFirst().id()).isEqualTo(a2.getId());
     }
