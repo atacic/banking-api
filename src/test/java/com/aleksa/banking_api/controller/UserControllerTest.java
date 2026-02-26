@@ -96,4 +96,3 @@ class UserControllerTest {
         verify(userService).loginUser(request);
     }
 }
-

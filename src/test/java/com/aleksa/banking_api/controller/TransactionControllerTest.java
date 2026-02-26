@@ -240,4 +240,3 @@ class TransactionControllerTest {
         verify(transactionService).patchTransaction(transactionId, request);
     }
 }
-

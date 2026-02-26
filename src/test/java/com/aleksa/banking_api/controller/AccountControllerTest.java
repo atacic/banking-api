@@ -209,4 +209,3 @@ class AccountControllerTest {
         verify(accountService).deleteAccount(accountId);
     }
 }
-
