@@ -112,4 +112,12 @@ public class TransferServiceImpl implements TransferService {
             throw exception;
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TransferResponse getTransferById(Long transferId) {
+        Transfer transfer = transferRepository.findById(transferId)
+                .orElseThrow(() -> new NotFoundException("Transfer with id=" + transferId + " not exist"));
+        return mapper.transferToTransferResponse(transfer);
+    }
 }

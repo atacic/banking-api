@@ -17,6 +17,8 @@ import com.aleksa.banking_api.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,14 +44,19 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactionsByAccountId(Long accountId) {
-        List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
+    public Page<TransactionResponse> getTransactionsByAccountId(Long accountId, Pageable pageable) {
+        Page<Transaction> transactions;
 
-        if (transactions.isEmpty()) {
-            throw new NotFoundException("No transactions found for account id=" + accountId);
+        if (accountId != null) {
+            transactions = transactionRepository.findByAccountId(accountId, pageable);
+
+
+
+        } else {
+            transactions = transactionRepository.findAll(pageable);
         }
 
-        return mapper.transactionsToTransactionResponses(transactions);
+        return transactions.map(mapper::transactionToTransactionResponse);
     }
 
     @Transactional
@@ -147,4 +154,6 @@ public class TransactionServiceImpl implements TransactionService {
         transaction = transactionRepository.save(transaction);
         return mapper.transactionToTransactionResponse(transaction);
     }
+
+
 }
