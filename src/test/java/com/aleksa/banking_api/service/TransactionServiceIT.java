@@ -18,6 +18,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -123,22 +126,26 @@ class TransactionServiceIT extends IntegrationTestBase {
 
         transactionRepository.saveAll(List.of(transaction1, transaction2));
 
+        Pageable pageable = PageRequest.of(0, 10);
+
         // When
-        List<TransactionResponse> list = transactionService.getTransactionsByAccountId(account.getId());
+        Page<TransactionResponse> page =
+                transactionService.getTransactionsByAccountId(account.getId(), pageable);
 
         // Then
-        assertThat(list).hasSize(2);
+        assertThat(page.getContent()).hasSize(2);
     }
 
     @Test
-    void shouldFailGetWhenNoTransactionsForAccount() {
+    void shouldReturnEmptyPageWhenNoTransactionsForAccount() {
 
-        // Given
         Long accountId = 123L;
+        Pageable pageable = PageRequest.of(0, 10);
 
-        // When, Then
-        assertThatThrownBy(() -> transactionService.getTransactionsByAccountId(accountId))
-                .isInstanceOf(NotFoundException.class);
+        Page<TransactionResponse> page =
+                transactionService.getTransactionsByAccountId(accountId, pageable);
+
+        assertThat(page).isEmpty();
     }
 
     @Test
