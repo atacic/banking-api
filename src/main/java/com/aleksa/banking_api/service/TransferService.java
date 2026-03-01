@@ -5,4 +5,6 @@ import com.aleksa.banking_api.dto.response.TransferResponse;
 
 public interface TransferService {
     TransferResponse createTransfer(TransferCreateRequest request);
+
+    TransferResponse getTransferById(Long transferId);
 }

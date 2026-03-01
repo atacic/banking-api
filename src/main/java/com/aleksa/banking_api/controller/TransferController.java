@@ -46,7 +46,7 @@ public class TransferController {
     })
     @GetMapping("/{transferId}")
     public ResponseEntity<TransferResponse> getTransfer(@PathVariable Long transferId) {
-//        return ResponseEntity.ok(transferService.getTransferById(transferId)); TODO: Domaci
-        return null;
+
+        return ResponseEntity.ok(transferService.getTransferById(transferId));
     }
 }

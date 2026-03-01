@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -65,8 +67,8 @@ public class TransactionController {
     )
     @ApiResponse(responseCode = "200", description = "List of transactions")
     @GetMapping
-    public ResponseEntity<List<TransactionResponse>> getTransactions(@Parameter(description = "Account ID") @RequestParam(required = false) Long accountId) {
-        return ResponseEntity.ok(transactionService.getTransactionsByAccountId(accountId)); // TODO: Domaci
+    public ResponseEntity<Page<TransactionResponse>> getTransactions(@Parameter(description = "Account ID") @RequestParam(required = false) Long accountId, Pageable pageable) {
+        return ResponseEntity.ok(transactionService.getTransactionsByAccountId(accountId, pageable));
     }
 
     @Operation(summary = "Partially update a transaction", description = "Partial update of transaction")
