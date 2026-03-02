@@ -7,6 +7,8 @@ import com.aleksa.banking_api.model.enums.TransactionStatus;
 import com.aleksa.banking_api.model.enums.TransactionType;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -76,14 +78,15 @@ class TransactionMapperTest {
         transaction2.setAccount(account2);
 
         List<Transaction> transactions = List.of(transaction1, transaction2);
+        Page<Transaction> transactionsPage = new PageImpl<>(transactions);
 
         // When
-        List<TransactionResponse> responses = transactionMapper.transactionsToTransactionResponses(transactions);
+        Page<TransactionResponse> response = transactionMapper.transactionsToTransactionResponses(transactionsPage);
 
         // Then
-        assertThat(responses).hasSize(2);
+        assertThat(response.getTotalElements()).isEqualTo(2);
 
-        TransactionResponse first = responses.getFirst();
+        TransactionResponse first = response.getContent().getFirst();
         assertThat(first.id()).isEqualTo(100L);
         assertThat(first.type()).isEqualTo(TransactionType.DEPOSIT);
         assertThat(first.status()).isEqualTo(TransactionStatus.COMPLETED);
@@ -92,7 +95,7 @@ class TransactionMapperTest {
         assertThat(first.description()).isEqualTo("First transaction");
         assertThat(first.accountId()).isEqualTo(1L);
 
-        TransactionResponse second = responses.get(1);
+        TransactionResponse second = response.getContent().getLast();
         assertThat(second.id()).isEqualTo(200L);
         assertThat(second.type()).isEqualTo(TransactionType.WITHDRAWAL);
         assertThat(second.status()).isEqualTo(TransactionStatus.PENDING);

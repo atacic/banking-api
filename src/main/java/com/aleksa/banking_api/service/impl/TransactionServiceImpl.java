@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -49,14 +48,11 @@ public class TransactionServiceImpl implements TransactionService {
 
         if (accountId != null) {
             transactions = transactionRepository.findByAccountId(accountId, pageable);
-
-
-
         } else {
             transactions = transactionRepository.findAll(pageable);
         }
 
-        return transactions.map(mapper::transactionToTransactionResponse);
+        return mapper.transactionsToTransactionResponses(transactions);
     }
 
     @Transactional

@@ -14,6 +14,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -177,34 +181,23 @@ class TransactionControllerTest {
                 accountId
         );
 
-        List<TransactionResponse> responses = List.of(tr1, tr2);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(transactionService.getTransactionsByAccountId(accountId)).thenReturn(responses);
+        List<TransactionResponse> transactionResponseList = List.of(tr1, tr2);
+        Page<TransactionResponse> transactionResponsePage = new PageImpl<>(transactionResponseList);
+
+
+        when(transactionService.getTransactionsByAccountId(accountId, pageable)).thenReturn(transactionResponsePage);
 
         // When & Then
         mockMvc.perform(get("/api/v1/transaction")
-                        .param("accountId", String.valueOf(accountId)))
+                        .param("accountId", String.valueOf(accountId))
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.totalElements").value(2));
 
-        verify(transactionService).getTransactionsByAccountId(accountId);
-    }
-
-    @Test
-    void shouldCallServiceWithNullAccountIdWhenNotProvided() throws Exception {
-
-        // Given
-        Long accountId = null;
-        List<TransactionResponse> responses = List.of();
-
-        when(transactionService.getTransactionsByAccountId(accountId)).thenReturn(responses);
-
-        // When & Then
-        mockMvc.perform(get("/api/v1/transaction"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
-
-        verify(transactionService).getTransactionsByAccountId(accountId);
+        verify(transactionService).getTransactionsByAccountId(accountId, pageable);
     }
 
     @Test

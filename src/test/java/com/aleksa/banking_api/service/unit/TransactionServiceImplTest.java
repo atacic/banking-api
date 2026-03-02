@@ -19,11 +19,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -98,7 +101,7 @@ class TransactionServiceImplTest {
         // Given
         Long accountId = 1L;
         Transaction transaction = new Transaction();
-        List<Transaction> transactions = List.of(transaction);
+        Page<Transaction> transactionsPage = new PageImpl<>(Collections.singletonList(transaction));
         TransactionResponse response = new TransactionResponse(
                 1L,
                 TransactionType.DEPOSIT,
@@ -110,29 +113,53 @@ class TransactionServiceImplTest {
                 LocalDateTime.now(),
                 accountId
         );
+        Page<TransactionResponse> transactionResponsePage = new PageImpl<>(Collections.singletonList(response));
 
-        when(transactionRepository.findByAccountId(accountId)).thenReturn(transactions);
-        when(mapper.transactionsToTransactionResponses(transactions)).thenReturn(List.of(response));
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(transactionRepository.findByAccountId(accountId, pageable)).thenReturn(transactionsPage);
+        when(mapper.transactionsToTransactionResponses(transactionsPage)).thenReturn(transactionResponsePage);
 
         // When
-        List<TransactionResponse> result = transactionService.getTransactionsByAccountId(accountId);
+        Page<TransactionResponse> result = transactionService.getTransactionsByAccountId(accountId, pageable);
 
         // Then
         assertThat(result).hasSize(1);
-        verify(transactionRepository).findByAccountId(accountId);
-        verify(mapper).transactionsToTransactionResponses(transactions);
+        verify(transactionRepository).findByAccountId(accountId, pageable);
+        verify(mapper).transactionsToTransactionResponses(transactionsPage);
     }
 
     @Test
-    void shouldThrowNotFoundExceptionWhenNoTransactionsForAccount() {
+    void shouldReturnAllTransactionsWhenAccountIdNotProvided() {
 
         // Given
-        Long accountId = 1L;
-        when(transactionRepository.findByAccountId(accountId)).thenReturn(Collections.emptyList());
+        Transaction transaction = new Transaction();
+        Page<Transaction> transactionsPage = new PageImpl<>(Collections.singletonList(transaction));
+        TransactionResponse response = new TransactionResponse(
+                1L,
+                TransactionType.DEPOSIT,
+                TransactionStatus.COMPLETED,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                "Test",
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                1L
+        );
+        Page<TransactionResponse> transactionResponsePage = new PageImpl<>(Collections.singletonList(response));
 
-        // When & Then
-        assertThatThrownBy(() -> transactionService.getTransactionsByAccountId(accountId))
-                .isInstanceOf(NotFoundException.class);
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(transactionRepository.findAll(pageable)).thenReturn(transactionsPage);
+        when(mapper.transactionsToTransactionResponses(transactionsPage)).thenReturn(transactionResponsePage);
+
+        // When
+        Page<TransactionResponse> result = transactionService.getTransactionsByAccountId(null, pageable);
+
+        // Then
+        assertThat(result).hasSize(1);
+        verify(transactionRepository).findAll(pageable);
+        verify(mapper).transactionsToTransactionResponses(transactionsPage);
     }
 
     @Test
