@@ -37,9 +37,12 @@ public class TransferServiceImpl implements TransferService {
     private final TransferRepository transferRepository;
     private final TransferMapper mapper;
     private final AccountCacheService accountCacheService;
+    private final UserRateLimiterService userRateLimiterService;
 
     @Transactional
     public TransferResponse createTransfer(TransferCreateRequest request) {
+
+        userRateLimiterService.validateTransferRateLimit();
 
         log.info("Transfer initiated | from={} → to={} | amount={}", request.fromAccountNumber(), request.toAccountNumber(), request.amount());
 

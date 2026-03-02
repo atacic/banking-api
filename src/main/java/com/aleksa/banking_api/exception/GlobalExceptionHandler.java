@@ -38,6 +38,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public final ResponseEntity<ExceptionResponse> handleRateLimitExceededException(RateLimitExceededException exception) {
+        ExceptionResponse response = new ExceptionResponse(exception.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ExceptionResponse> handleOptimisticLock() {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ExceptionResponse("Concurrent modification detected"));

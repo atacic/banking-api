@@ -13,10 +13,7 @@ import com.aleksa.banking_api.model.enums.TransferStatus;
 import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.repoistory.TransferRepository;
-import com.aleksa.banking_api.service.impl.AccountCacheService;
-import com.aleksa.banking_api.service.impl.TransferServiceImpl;
-import com.aleksa.banking_api.service.impl.TransferStatusService;
-import com.aleksa.banking_api.service.impl.TransactionStatusService;
+import com.aleksa.banking_api.service.impl.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +36,9 @@ class TransferServiceImplTest {
 
     @Mock
     private TransactionStatusService transactionStatusService;
+
+    @Mock
+    private UserRateLimiterService userRateLimiterService;
 
     @Mock
     private AccountRepository accountRepository;
