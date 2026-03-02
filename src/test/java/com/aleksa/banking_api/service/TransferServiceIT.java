@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.concurrent.DelegatingSecurityContextRunnable;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,6 +48,9 @@ class TransferServiceIT extends IntegrationTestBase {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+    @Value("${rate-limiter.max.attempts:5}")
+    private int maxAttempts;
 
     private Account sourceAccount;
     private User testUser;
@@ -150,9 +154,9 @@ class TransferServiceIT extends IntegrationTestBase {
         );
 
         // When & Then
-        transferService.createTransfer(request);
-        transferService.createTransfer(request);
-        transferService.createTransfer(request);
+        for (int i = 0; i < maxAttempts; i++) {
+            transferService.createTransfer(request);
+        }
         assertThatThrownBy(() -> transferService.createTransfer(request))
                 .isInstanceOf(RateLimitExceededException.class)
                 .hasMessageContaining("Rate limit exceeded");
