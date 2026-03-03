@@ -64,7 +64,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#accountId")
+    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#p0")
     public AccountResponse patchAccount(Long accountId, AccountPatchRequest request) {
 
         Account account = accountRepository.findById(accountId).orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
@@ -87,7 +87,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#accountId")
+    @Cacheable(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#p0")
     public AccountResponse getAccountById(Long accountId, User authUser) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));
@@ -110,7 +110,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#accountId")
+    @CacheEvict(value = RedisConfig.CACHE_NAME_ACCOUNTS, key = "#p0")
     public void deleteAccount(Long accountId) {
         accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account with id: " + accountId + " not found"));

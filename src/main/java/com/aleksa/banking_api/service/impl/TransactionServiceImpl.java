@@ -34,7 +34,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionMapper mapper;
 
     @Transactional(readOnly = true)
-    @Cacheable(value = RedisConfig.CACHE_NAME_TRANSACTIONS, key = "#transactionId")
+    @Cacheable(value = RedisConfig.CACHE_NAME_TRANSACTIONS, key = "#p0")
     public TransactionResponse getTransactionById(Long transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new NotFoundException("Transaction with id=" + transactionId + " does not exist"));
@@ -134,7 +134,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    @CacheEvict(value = RedisConfig.CACHE_NAME_TRANSACTIONS, key = "#transactionId")
+    @CacheEvict(value = RedisConfig.CACHE_NAME_TRANSACTIONS, key = "#p0")
     public TransactionResponse patchTransaction(Long transactionId, TransactionPatchRequest request) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new NotFoundException("Transaction with id: " + transactionId + " not found"));
@@ -150,6 +150,4 @@ public class TransactionServiceImpl implements TransactionService {
         transaction = transactionRepository.save(transaction);
         return mapper.transactionToTransactionResponse(transaction);
     }
-
-
 }

@@ -5,6 +5,7 @@ import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.exception.BadRequestException;
 import com.aleksa.banking_api.exception.NotFoundException;
+import com.aleksa.banking_api.exception.RateLimitExceededException;
 import com.aleksa.banking_api.model.Account;
 import com.aleksa.banking_api.model.User;
 import com.aleksa.banking_api.model.enums.*;
@@ -17,6 +18,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.concurrent.DelegatingSecurityContextRunnable;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,6 +48,9 @@ class TransferServiceIT extends IntegrationTestBase {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+    @Value("${rate-limiter.max.attempts:5}")
+    private int maxAttempts;
 
     private Account sourceAccount;
     private User testUser;
@@ -82,6 +91,7 @@ class TransferServiceIT extends IntegrationTestBase {
     }
 
     @Test
+    @WithMockUser(username = "transfer@test.com", roles = "USER")
     void shouldCreateTransferSuccessfully() {
 
         // Given
@@ -124,6 +134,36 @@ class TransferServiceIT extends IntegrationTestBase {
     }
 
     @Test
+    @WithMockUser(username = "transfer@test.com", roles = "USER")
+    void shouldFailCreateTransferWhenLimitExceeded() {
+
+        // Given
+        Account targetAccount = new Account();
+        targetAccount.setAccountNumber("ACC-98765");
+        targetAccount.setCurrency("EUR");
+        targetAccount.setBalance(BigDecimal.valueOf(800));
+        targetAccount.setStatus(AccountStatus.ACTIVE);
+        targetAccount.setUser(testUser);
+        targetAccount = accountRepository.save(targetAccount);
+
+        TransferCreateRequest request = new TransferCreateRequest(
+                sourceAccount.getAccountNumber(),
+                targetAccount.getAccountNumber(),
+                BigDecimal.valueOf(100),
+                "February rent"
+        );
+
+        // When & Then
+        for (int i = 0; i < maxAttempts; i++) {
+            transferService.createTransfer(request);
+        }
+        assertThatThrownBy(() -> transferService.createTransfer(request))
+                .isInstanceOf(RateLimitExceededException.class)
+                .hasMessageContaining("Rate limit exceeded");
+    }
+
+    @Test
+    @WithMockUser(username = "transfer@test.com", roles = "USER")
     void shouldFailCreateTransferWhenSourceAccountDoesNotExist() {
 
         // Given
@@ -141,6 +181,7 @@ class TransferServiceIT extends IntegrationTestBase {
     }
 
     @Test
+    @WithMockUser(username = "transfer@test.com", roles = "USER")
     void shouldFailCreateTransferWhenTargetAccountDoesNotExist() {
 
         // Given
@@ -158,6 +199,7 @@ class TransferServiceIT extends IntegrationTestBase {
     }
 
     @Test
+    @WithMockUser(username = "transfer@test.com", roles = "USER")
     void shouldFailCreateTransferWhenInsufficientFunds() {
 
         // Given
@@ -183,6 +225,7 @@ class TransferServiceIT extends IntegrationTestBase {
     }
 
     @Test
+    @WithMockUser(username = "transfer@test.com", roles = "USER")
     void concurrentTransfers_shouldSerializeWithPessimisticLock() throws InterruptedException {
 
         // Given
@@ -200,17 +243,33 @@ class TransferServiceIT extends IntegrationTestBase {
         AtomicInteger successCount = new AtomicInteger();
         AtomicInteger failureCount = new AtomicInteger();
 
+        SecurityContext testContext = SecurityContextHolder.getContext();
+
         Runnable task = () -> {
             try {
                 startLatch.await();
-                transferService.createTransfer(new TransferCreateRequest(
-                        sourceAccount.getAccountNumber(),
-                        targetAccount.getAccountNumber(),
-                        BigDecimal.valueOf(1200),
-                        "Concurrent test"
-                ));
-                successCount.incrementAndGet();
-            } catch (Exception e) {
+
+                DelegatingSecurityContextRunnable wrapped = new DelegatingSecurityContextRunnable(
+                        () -> {
+                            try {
+                                // When
+                                transferService.createTransfer(new TransferCreateRequest(
+                                        sourceAccount.getAccountNumber(),
+                                        targetAccount.getAccountNumber(),
+                                        BigDecimal.valueOf(1200),
+                                        "Concurrent test"
+                                ));
+                                successCount.incrementAndGet();
+                            } catch (Exception e) {
+                                failureCount.incrementAndGet();
+                            }
+                        },
+                        testContext
+                );
+                wrapped.run();
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 failureCount.incrementAndGet();
             } finally {
                 doneLatch.countDown();
@@ -225,6 +284,7 @@ class TransferServiceIT extends IntegrationTestBase {
         startLatch.countDown();
         doneLatch.await();
 
+        // Then
         // Expect: only one succeeds (due to balance check + lock), second fails on insufficient funds
         assertThat(successCount.get() + failureCount.get()).isEqualTo(2);
         assertThat(successCount.get()).isEqualTo(1);
