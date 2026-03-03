@@ -35,7 +35,7 @@ public class UserRateLimiterServiceIT extends IntegrationTestBase {
     @Autowired
     private UserRepository userRepository;
 
-    @Value("${rate-limiter.max.attempts:5}")
+    @Value("${rate-limiter.max.attempts:3}")
     private int maxAttempts;
 
     @Value("${rate-limiter.time.window.size.ms:60000}")
