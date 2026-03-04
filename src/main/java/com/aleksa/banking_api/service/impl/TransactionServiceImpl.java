@@ -1,6 +1,7 @@
 package com.aleksa.banking_api.service.impl;
 
 import com.aleksa.banking_api.config.RedisConfig;
+import com.aleksa.banking_api.dto.event.NotificationEvent;
 import com.aleksa.banking_api.dto.request.TransactionCreateRequest;
 import com.aleksa.banking_api.dto.request.TransactionPatchRequest;
 import com.aleksa.banking_api.dto.response.TransactionResponse;
@@ -14,7 +15,9 @@ import com.aleksa.banking_api.model.enums.TransactionType;
 import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.service.TransactionService;
+import com.aleksa.banking_api.service.impl.notification.NotificationProducer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -23,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
@@ -32,6 +37,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final TransactionMapper mapper;
+    private final NotificationProducer notificationProducer;
 
     @Transactional(readOnly = true)
     @Cacheable(value = RedisConfig.CACHE_NAME_TRANSACTIONS, key = "#p0")
@@ -79,6 +85,8 @@ public class TransactionServiceImpl implements TransactionService {
             accountRepository.save(account);
             transactionRepository.save(transaction);
 
+            sendTransactionNotification(transaction, account, NotificationEvent.EventType.TRANSACTION_DEPOSIT);
+
             return mapper.transactionToTransactionResponse(transaction);
 
         } catch (RuntimeException exception) {
@@ -116,11 +124,29 @@ public class TransactionServiceImpl implements TransactionService {
             transaction.setStatus(TransactionStatus.COMPLETED);
             transactionRepository.save(transaction);
 
+            sendTransactionNotification(transaction, account, NotificationEvent.EventType.TRANSACTION_WITHDRAWAL);
+
             return mapper.transactionToTransactionResponse(transaction);
 
         } catch (RuntimeException exception) {
             transactionStatusService.markTransactionFailed(transaction.getId(), exception.getMessage());
             throw exception;
+        }
+    }
+
+    private void sendTransactionNotification(Transaction transaction, Account account, NotificationEvent.EventType type) {
+        try {
+            String action = (type == NotificationEvent.EventType.TRANSACTION_DEPOSIT) ? "deposited into" : "withdrawn from";
+            notificationProducer.sendEmailNotification(new NotificationEvent(
+                    account.getUser().getEmail(),
+                    "Transaction Notification",
+                    String.format("Amount of %s %s was %s your account %s.",
+                            transaction.getAmount(), account.getCurrency(), action, account.getAccountNumber()),
+                    type,
+                    Map.of("transactionId", transaction.getId())
+            ));
+        } catch (Exception e) {
+            log.error("Failed to send transaction notification for transaction ID: {}", transaction.getId(), e);
         }
     }
 

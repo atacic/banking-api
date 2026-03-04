@@ -1,5 +1,6 @@
 package com.aleksa.banking_api.service.impl;
 
+import com.aleksa.banking_api.dto.event.NotificationEvent;
 import com.aleksa.banking_api.dto.request.TransferCreateRequest;
 import com.aleksa.banking_api.dto.response.TransferResponse;
 import com.aleksa.banking_api.exception.BadRequestException;
@@ -15,6 +16,7 @@ import com.aleksa.banking_api.repoistory.AccountRepository;
 import com.aleksa.banking_api.repoistory.TransactionRepository;
 import com.aleksa.banking_api.repoistory.TransferRepository;
 import com.aleksa.banking_api.service.TransferService;
+import com.aleksa.banking_api.service.impl.notification.NotificationProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ public class TransferServiceImpl implements TransferService {
     private final TransferMapper mapper;
     private final AccountCacheService accountCacheService;
     private final UserRateLimiterService userRateLimiterService;
+    private final NotificationProducer notificationProducer;
 
     @Transactional
     public TransferResponse createTransfer(TransferCreateRequest request) {
@@ -103,6 +106,8 @@ public class TransferServiceImpl implements TransferService {
 
             accountCacheService.evictTwoAccounts(fromAccount.getId(), toAccount.getId());
 
+            sendTransferNotifications(transfer, fromAccount, toAccount);
+
             return mapper.transferToTransferResponse(transfer);
 
         } catch (RuntimeException exception) {
@@ -113,6 +118,32 @@ public class TransferServiceImpl implements TransferService {
             transactionStatusService.markTransactionFailed(transactionIn.getId(), exception.getMessage());
             transferStatusService.markTransferFailed(transfer.getId(), exception.getMessage());
             throw exception;
+        }
+    }
+
+    private void sendTransferNotifications(Transfer transfer, Account fromAccount, Account toAccount) {
+        try {
+            // Notification for Sender
+            notificationProducer.sendEmailNotification(new NotificationEvent(
+                    fromAccount.getUser().getEmail(),
+                    "Transfer Successful",
+                    String.format("You have successfully sent %s %s to %s.",
+                            transfer.getAmount(), fromAccount.getCurrency(), toAccount.getUser().getFullName()),
+                    NotificationEvent.EventType.TRANSFER_SENT,
+                    Map.of("transferId", transfer.getId())
+            ));
+
+            // Notification for Receiver
+            notificationProducer.sendEmailNotification(new NotificationEvent(
+                    toAccount.getUser().getEmail(),
+                    "Incoming Transfer Received",
+                    String.format("You have received %s %s from %s.",
+                            transfer.getAmount(), toAccount.getCurrency(), fromAccount.getUser().getFullName()),
+                    NotificationEvent.EventType.TRANSFER_RECEIVED,
+                    Map.of("transferId", transfer.getId())
+            ));
+        } catch (Exception e) {
+            log.error("Failed to send transfer notifications for transfer ID: {}", transfer.getId(), e);
         }
     }
 
